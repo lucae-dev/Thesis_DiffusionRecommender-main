@@ -16,7 +16,7 @@ import torch
 #Input to forward -> (xb, xb, xb, null) with xb: (n_of_batches, batch, emb_dim)
 class MultiHeadAttentionBlock(nn.Module):
 
-    def __init__(self, d_model:int, h:int, dropout:float, device = None) -> None:
+    def __init__(self, d_model:int, h:int, dropout = None, device = None, use_gpu = True) -> None:
         super().__init__()
         self.d_model = d_model
         self.h = h
@@ -29,8 +29,10 @@ class MultiHeadAttentionBlock(nn.Module):
 
         self.w_o = nn.Linear(d_model,d_model) #output layer
         self.dropout = dropout
+        
+        self.device = device;
 
-        self.denoising_model_loss = torch.zeros(1, requires_grad=False, device = device)
+        self.denoising_model_loss = torch.zeros(1, requires_grad = False, device = device)
 
 
     @staticmethod
@@ -48,10 +50,14 @@ class MultiHeadAttentionBlock(nn.Module):
 
         #mask avoids some input to see at others (for sequence models is useful to not make previous words the future ones)
     def forward(self, q, k, v, mask):
+        print("q input:")
+        print(q.shape)
         query = self.w_q(q) #(Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model)
         key = self.w_k(k) #(Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model)
         value = self.w_v(v) #(Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model)
 
+        print("query.shape:")
+        print(query.shape)
         #here we basically divide the 'embeddings' of dimension domodel in h parts of dimension d_k
         #(Batch, Seq_Len, d_model)-- >(Batch,Seq_Len, h, d_k) --transpose-->(Batch,h,Seq_Len,d_k)
         query = query.view(query.shape[0], query.shape[1], self.h, self.d_k).transpose(1,2) #transpose switches the second(1) and third (2)dimension
