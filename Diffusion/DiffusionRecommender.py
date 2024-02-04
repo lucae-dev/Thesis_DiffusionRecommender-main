@@ -316,7 +316,7 @@ class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_
         gaussian_noise = torch.randn_like(x_emb_batch)
 
         # noise sample
-        x_noisy = self.q_sample(x_start = x_emb_batch, t = t, gaussian_noise = gaussian_noise)
+        x_noisy = self._model.q_sample(x_start = x_emb_batch, t = t, gaussian_noise = gaussian_noise)
         #x_noisy = x_noisy + self.positional_encoding.get_encoding(t)
 
         denoiser_prediction = self.denoiser_model.forward(x_noisy, x_noisy, x_noisy, None)
