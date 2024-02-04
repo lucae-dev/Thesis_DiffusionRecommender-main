@@ -177,6 +177,7 @@ class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_
                 raise RuntimeError("GPU is requested but neither CUDA nor MPS is available")
         else:
             self.device = torch.device("cpu:0")
+            print("no GPU")
 
         self.warm_user_ids = np.arange(0, self.n_users)[np.ediff1d(sps.csr_matrix(self.URM_train).indptr) > 0]
 
@@ -230,7 +231,7 @@ class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_
                                               objective = self.objective,
                                               ).to(self.device)
         
-        self.encoder_model = SimpleAutoencoder(self.n_items, self.embeddings_dim)
+        self.encoder_model = SimpleAutoencoder(self.n_items, self.embeddings_dim, device=self.device)
 
 
     def fit(self, epochs = 300,
@@ -463,9 +464,11 @@ class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_
 
 
 class SimpleAutoencoder(nn.Module):
-    def __init__(self, input_dim, encoding_dim):
+    def __init__(self, input_dim, encoding_dim, device = None):
         super(SimpleAutoencoder, self).__init__()
-        
+
+        self.device = device
+
         intermediate_dim = round((input_dim + encoding_dim) / 2)
 
         # Encoder
