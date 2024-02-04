@@ -487,6 +487,8 @@ class SimpleAutoencoder(nn.Module):
             nn.Sigmoid()  # use sigmoid for normalized inputs
         )
 
+        self.to(self.device)
+
     def encode(self, x):
         return self.encoder(x)
 
