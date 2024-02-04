@@ -220,7 +220,7 @@ class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_
         noise_schedule = LinearNoiseSchedule(start_beta = self.start_beta, end_beta = self.end_beta,
                                              device=self.device, noise_timesteps = self.noise_timesteps)
 
-        denoiser_model = MultiHeadAttentionBlock(d_model = self.embeddings_dim, h = self.heads, device = self.device, dropout=None)
+        self.denoiser_model = MultiHeadAttentionBlock(d_model = self.embeddings_dim, h = self.heads, device = self.device, dropout=None)
 
         self._model = _GaussianDiffusionModel(denoiser_model,
                                               noise_schedule,
