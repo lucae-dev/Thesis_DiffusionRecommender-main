@@ -14,7 +14,7 @@ import torch
 # embeddings, in this case the sequence length is already the batch number of user profiles,
 # so we could pass a batch of batches of user profiles!!! (in this case the sequence length indicates actually the dimension of the batch of user profiles, while the batch indicates the number of batches passed at the same time)
 #Input to forward -> (xb, xb, xb, null) with xb: (n_of_batches, batch, emb_dim)
-class MultiHeadAttentionBlock(nn.module):
+class MultiHeadAttentionBlock(nn.Module):
 
     def __init__(self, d_model:int, h:int, dropout:float, device = None) -> None:
         super().__init__()
