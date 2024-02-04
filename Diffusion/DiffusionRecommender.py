@@ -94,7 +94,7 @@ class _GaussianDiffusionModel(nn.Module):
         print("a_signed shape: ")
         print(a_signed.shape)
         print("a_sized_reshaped: ")
-        print(a_signed.reshape(batch_size,1))
+        print(a_signed.reshape(batch_size,1).shape)
         batch_size = len(t)
         x_noisy = torch.sqrt(a_signed).reshape(batch_size, 1)*x_start + torch.sqrt(1 - a_signed).reshape(batch_size, 1) * gaussian_noise
 
