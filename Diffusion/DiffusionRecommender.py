@@ -91,6 +91,10 @@ class _GaussianDiffusionModel(nn.Module):
         """
 
         a_signed = self.noise_schedule.get_a_signed(t)
+        print("a_signed shape: ")
+        print(a_signed.shape)
+        print("a_sized_reshaped: ")
+        print(a_signed.reshape(batch_size,1))
         batch_size = len(t)
         x_noisy = torch.sqrt(a_signed).reshape(batch_size, 1)*x_start + torch.sqrt(1 - a_signed).reshape(batch_size, 1) * gaussian_noise
 
@@ -312,12 +316,14 @@ class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_
         """
 
         x_emb_batch = self.encoder_model.encode(x_start_batch)
+        print(x_emb_batch.shape)
 
         gaussian_noise = torch.randn_like(x_emb_batch)
 
         # noise sample
         x_noisy = self._model.q_sample(x_start = x_emb_batch, t = t, gaussian_noise = gaussian_noise)
         #x_noisy = x_noisy + self.positional_encoding.get_encoding(t)
+        print(x_noisy.shape)
 
         denoiser_prediction = self.denoiser_model.forward(x_noisy, x_noisy, x_noisy, None)
         denosier_loss = self.denoiser_model.loss()
@@ -476,7 +482,7 @@ class SimpleAutoencoder(nn.Module):
 
         # Encoder
         self.encoder = nn.Sequential(
-            nn.Linear(input_dim, intermediate_dim),  # assuming input size to be 28x28
+            nn.Linear(input_dim, intermediate_dim),  
             nn.ReLU(),
             nn.Linear(intermediate_dim, encoding_dim),
             nn.ReLU()
@@ -487,7 +493,7 @@ class SimpleAutoencoder(nn.Module):
             nn.Linear(encoding_dim, intermediate_dim),
             nn.ReLU(),
             nn.Linear(intermediate_dim, input_dim),
-            nn.Sigmoid()  # use sigmoid for normalized inputs
+            nn.Sigmoid() 
         )
 
         self.to(self.device)
