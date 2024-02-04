@@ -318,7 +318,7 @@ class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_
         x_noisy = self.q_sample(x_start = x_emb_batch, t = t, gaussian_noise = gaussian_noise)
         #x_noisy = x_noisy + self.positional_encoding.get_encoding(t)
 
-        denoiser_prediction = self.denoiser_model(x_noisy, x_noisy, x_noisy, None)
+        denoiser_prediction = self.denoiser_model.forward(x_noisy, x_noisy, x_noisy, None)
         denosier_loss = self.denoiser_model.loss()
 
         if self.objective == 'pred_noise':
@@ -368,7 +368,7 @@ class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_
             t = torch.randint(0, self.noise_timesteps, (len(user_batch_tensor),), device=self.device, dtype=torch.long)
 
             # Compute prediction for each element in batch
-            loss = self._model.forward(user_batch_tensor, t)
+            loss = self.forward(user_batch_tensor, t)
 
             # Compute gradients given current loss
             loss.backward()
