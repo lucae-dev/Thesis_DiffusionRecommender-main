@@ -318,7 +318,7 @@ class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_
         x_noisy = self.q_sample(x_start = x_emb_batch, t = t, gaussian_noise = gaussian_noise)
         #x_noisy = x_noisy + self.positional_encoding.get_encoding(t)
 
-        denoiser_prediction = self.denoiser_model(x_noisy)
+        denoiser_prediction = self.denoiser_model(x_noisy, x_noisy, x_noisy, None)
         denosier_loss = self.denoiser_model.loss()
 
         if self.objective == 'pred_noise':
