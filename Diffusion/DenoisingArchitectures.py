@@ -70,6 +70,9 @@ class MultiHeadAttentionBlock(nn.Module):
         x = x.transpose(1,2).contiguous().view(x.shape[0], -1, self.h * self.d_k)
         
         return self.w_o(x)
+    
+    def loss(self):
+        return self.denoising_model_loss
 
 #encoder architecture is the list of dimensions of the layers that starts with the input size, arrive at a bottleneck (encoded features) and then goes back up to input dimension(decoded features, """restoring""" the input)
 class AutoencoderModel(nn.Module):
