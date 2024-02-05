@@ -62,7 +62,7 @@ class MultiHeadAttentionBlock(nn.Module):
         #(Batch, Seq_Len, d_model)-- >(Batch,Seq_Len, h, d_k) --transpose-->(Batch,h,Seq_Len,d_k)
         query = query.view(query.shape[0], query.shape[1], self.h, self.d_k).transpose(1,2) #transpose switches the second(1) and third (2)dimension
         key = key.view(key.shape[0], key.shape[1], self.h, self.d_k).transpose(1,2)
-        value = value.view(value.shape[0], value.shape[1], self.h, self.d_k)
+        value = value.view(value.shape[0], value.shape[1], self.h, self.d_k).transpose(1,2)
 
         x,self.attention_scores = MultiHeadAttentionBlock.attention(query, key, value, mask, self.dropout)
 
