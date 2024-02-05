@@ -50,7 +50,7 @@ class MultiHeadAttentionBlock(nn.Module):
 
         #modified to accept as input a batch of user profiles noised emb and return a batch of denoised user profiles emb
         #mask avoids some input to see at others (for sequence models is useful to not make previous words the future ones)
-    def forward(self, x, mask):
+    def forward(self, x, mask=None):
         x_unsqueezed = torch.unsqueeze(x, 0)
 
         query = self.w_q(x_unsqueezed) #(Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model)
