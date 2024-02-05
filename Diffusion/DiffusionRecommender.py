@@ -316,7 +316,6 @@ class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_
         """
 
         x_emb_batch = self.encoder_model.encode(x_start_batch)
-        print(x_emb_batch.shape)
 
         gaussian_noise = torch.randn_like(x_emb_batch)
 
@@ -324,11 +323,7 @@ class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_
         x_noisy = self._model.q_sample(x_start = x_emb_batch, t = t, gaussian_noise = gaussian_noise)
         #x_noisy = x_noisy + self.positional_encoding.get_encoding(t)
         
-        x_noisy_squeezed = torch.unsqueeze(x_noisy, 0)
-        print("unsqueezed: ")
-        print(x_noisy_squeezed.shape)
-        
-        denoiser_prediction = torch.squeeze(self.denoiser_model.forward(x_noisy_squeezed, x_noisy_squeezed, x_noisy_squeezed, None), 0)
+        denoiser_prediction = self.denoiser_model.forward(x_noisy, None)
         denosier_loss = self.denoiser_model.loss()
 
         if self.objective == 'pred_noise':

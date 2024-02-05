@@ -48,13 +48,14 @@ class MultiHeadAttentionBlock(nn.Module):
 
         return (attention_scores@value), attention_scores
 
+        #modified to accept as input a batch of user profiles noised emb and return a batch of denoised user profiles emb
         #mask avoids some input to see at others (for sequence models is useful to not make previous words the future ones)
-    def forward(self, q, k, v, mask):
-        print("q input:")
-        print(q.shape)
-        query = self.w_q(q) #(Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model)
-        key = self.w_k(k) #(Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model)
-        value = self.w_v(v) #(Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model)
+    def forward(self, x, mask):
+        x_unsqueezed = torch.unsqueeze(x, 0)
+
+        query = self.w_q(x_unsqueezed) #(Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model)
+        key = self.w_k(x_unsqueezed) #(Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model)
+        value = self.w_v(x_unsqueezed) #(Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model)
 
         print("query.shape:")
         print(query.shape)
@@ -69,7 +70,7 @@ class MultiHeadAttentionBlock(nn.Module):
         #(Batch, h, Seq_Len, d_k) -- > (Batch, Seq_Len, h, d_k) --> (Batch,Seq_Len, d_model)
         x = x.transpose(1,2).contiguous().view(x.shape[0], -1, self.h * self.d_k)
         
-        return self.w_o(x)
+        return torch.squeeze(self.w_o(x),0)
     
     def loss(self):
         return self.denoising_model_loss
