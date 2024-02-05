@@ -142,7 +142,7 @@ class _GaussianDiffusionModel(nn.Module):
             user_profile_inference = self.q_sample(x_start = user_profile, t = torch.tensor([inference_timesteps], device=user_profile.device, dtype=torch.long), gaussian_noise = gaussian_noise)
 
             for timestep in range(inference_timesteps, 0, -1):
-                user_profile_inference = user_profile_inference + self.positional_encoding.get_encoding(torch.tensor([timestep], device=user_profile.device))
+                user_profile_inference = user_profile_inference # + self.positional_encoding.get_encoding(torch.tensor([timestep], device=user_profile.device))
 
                 user_profile_inference = self.denoiser_model.forward(user_profile_inference)
 
@@ -207,8 +207,12 @@ class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_
                                                     device=self.device,
                                                     requires_grad=False).to_dense()
 
-        user_profile_inference = self._model.sample_from_user_profile(user_profile_batch, self.inference_timesteps).cpu().detach().numpy()
-
+        x_emb_batch = self.encoder_model.encode(user_profile_batch)
+        
+        user_profile_inference_emb = self._model.sample_from_user_profile(x_emb_batch, self.inference_timesteps).cpu().detach().numpy()
+        
+        user_profile_inference_emb = self.encoder_model.decode(torch.from_numpy(user_profile_inference_emb))
+        
         if items_to_compute is None:
             item_scores = user_profile_inference
         else:
