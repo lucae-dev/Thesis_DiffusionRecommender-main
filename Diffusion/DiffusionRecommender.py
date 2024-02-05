@@ -209,9 +209,9 @@ class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_
 
         x_emb_batch = self.encoder_model.encode(user_profile_batch)
         
-        user_profile_inference_emb = self._model.sample_from_user_profile(x_emb_batch, self.inference_timesteps).cpu().detach().numpy()
+        user_profile_inference_emb = self._model.sample_from_user_profile(x_emb_batch, self.inference_timesteps)
         
-        user_profile_inference_emb = self.encoder_model.decode(torch.from_numpy(user_profile_inference_emb))
+        user_profile_inference = self.encoder_model.decode(user_profile_inference_emb).cpu().detach().numpy()
         
         if items_to_compute is None:
             item_scores = user_profile_inference
