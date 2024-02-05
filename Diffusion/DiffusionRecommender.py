@@ -326,7 +326,7 @@ class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_
         
         x_noisy_squeezed = torch.unsqueeze(x_noisy, 0)
         print("unsqueezed: ")
-        print(x_noisy.shape)
+        print(x_noisy_squeezed.shape)
         
         denoiser_prediction = torch.squeeze(self.denoiser_model.forward(x_noisy_squeezed, x_noisy_squeezed, x_noisy_squeezed, None), 0)
         denosier_loss = self.denoiser_model.loss()
