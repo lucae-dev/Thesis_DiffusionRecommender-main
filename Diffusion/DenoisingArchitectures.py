@@ -57,8 +57,6 @@ class MultiHeadAttentionBlock(nn.Module):
         key = self.w_k(x_unsqueezed) #(Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model)
         value = self.w_v(x_unsqueezed) #(Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model)
 
-        print("query.shape:")
-        print(query.shape)
         #here we basically divide the 'embeddings' of dimension domodel in h parts of dimension d_k
         #(Batch, Seq_Len, d_model)-- >(Batch,Seq_Len, h, d_k) --transpose-->(Batch,h,Seq_Len,d_k)
         query = query.view(query.shape[0], query.shape[1], self.h, self.d_k).transpose(1,2) #transpose switches the second(1) and third (2)dimension

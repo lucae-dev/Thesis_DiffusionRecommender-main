@@ -367,9 +367,6 @@ class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_
                                                         device=self.device,
                                                         requires_grad=False).to_dense()
             
-            print("user_batch_size: ")
-            print(user_batch_tensor.shape)
-
             #here you coudl transform the user profile to reduce dimensionality before passing tbem to the forward, the forward will learn this way to predict the reduced-size-user-profile (which is like an embedding), not the normal user profile (or the noise applied to embeddign)
             # you can do it just passing the user profiles trough a linear layer, just take the encoder of an autoencoder and get it trough it
 
