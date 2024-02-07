@@ -385,7 +385,8 @@ class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_
             self.current_epoch_training_loss += loss.item()
 
 
-        self._print("Epoch {}, loss {:.2E}".format(num_epoch, self.current_epoch_training_loss))
+        if (self.verbose == True):
+         self._print("Epoch {}, loss {:.2E}".format(num_epoch, self.current_epoch_training_loss))
         # self.loss_list.append(self.current_epoch_training_loss)
 
 
