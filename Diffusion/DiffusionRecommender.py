@@ -342,18 +342,18 @@ class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_
 
         self._print("Training complete")
 
-        self._model.load_state_dict(self._model_best)
+        self.diffusion_model.load_state_dict(self._model_best)
 
         # Set model in evaluation mode (disables dropout, for example)
-        self._model.eval()
+        self.diffusion_model.eval()
 
 
     def _prepare_model_for_validation(self):
-        self._model.eval() # Particularly important if we use dropout or batch norm layers
+        self.diffusion_model.eval() # Particularly important if we use dropout or batch norm layers
 
 
     def _update_best_model(self):
-        self._model_best = copy.deepcopy(self._model.state_dict())
+        self._model_best = copy.deepcopy(self.diffusion_model.state_dict())
 
     def forward(self, x_start_batch, t):
         """
