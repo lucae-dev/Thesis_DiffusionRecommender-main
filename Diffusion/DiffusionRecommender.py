@@ -155,7 +155,7 @@ class _GaussianDiffusionModel(nn.Module):
 
 
 
-class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_Early_Stopping):
+class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_Early_Stopping, nn.Module):
     """
     Diffusion model based on user profiles, using a single self-attention layer as denoising architecture
     """
@@ -163,8 +163,9 @@ class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_
     RECOMMENDER_NAME = "SimpleAttentionDiffusionRecommender"
 
     def __init__(self, URM_train, use_gpu = True, verbose = True):
-        super(SimpleAttentionDiffusionRecommender, self).__init__(URM_train, verbose = verbose)
-
+        BaseRecommender(SimpleAttentionDiffusionRecommender, self).__init__(URM_train, verbose = verbose)
+        nn.Module.__init__(self)
+        
         if use_gpu:
             # Check for CUDA availability (for NVIDIA GPUs)
             if torch.cuda.is_available():
