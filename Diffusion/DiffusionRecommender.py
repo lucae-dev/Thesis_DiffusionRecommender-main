@@ -155,7 +155,7 @@ class _GaussianDiffusionModel(nn.Module):
 
 class SimpleAttentionDiffusionModel(nn.Module):
     def __init__(self, gaussian_model, encoder_model, denoiser_model):
-        super(self).__init__()
+        super().__init__()
         self._model = gaussian_model
         self.encoder_model = encoder_model
         self.denoiser_model = denoiser_model
