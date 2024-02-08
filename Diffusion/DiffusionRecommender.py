@@ -155,7 +155,7 @@ class _GaussianDiffusionModel(nn.Module):
 
 
 
-class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_Early_Stopping):
+class SimpleAttentionDiffusionRecommender(nn.Module, BaseRecommender, Incremental_Training_Early_Stopping):
     """
     Diffusion model based on user profiles, using a single self-attention layer as denoising architecture
     """
