@@ -230,6 +230,8 @@ class SimpleAttentionDiffusionRecommender(BaseRecommender, Incremental_Training_
     def _set_inference_timesteps(self,inference_timesteps):
         self.inference_timesteps = inference_timesteps
         
+    def get_diffusion_parameters(self):
+        return self.diffusion_model.parameters()
 
     def _compute_item_score(self, user_id_array, items_to_compute = None):
         """
