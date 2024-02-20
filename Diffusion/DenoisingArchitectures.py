@@ -7,6 +7,10 @@ Created on 09/10/2022
 """
 
 import math
+from TransformerLuca.TransformerArchitecrture.Decoder import DecoderBlock
+from TransformerLuca.TransformerArchitecrture.Encoder import EncoderBlcok, EncoderBlock
+from TransformerLuca.TransformerArchitecrture.FeedForwardBlock import FeedForwardBlock
+from TransformerLuca.TransformerArchitecrture.LayerNormalization import LayerNormalization
 from torch import nn
 import torch
 
@@ -50,7 +54,7 @@ class MultiHeadAttentionBlock(nn.Module):
 
         #modified to accept as input a batch of user profiles noised emb and return a batch of denoised user profiles emb
         #mask avoids some input to see at others (for sequence models is useful to not make previous words the future ones)
-    def forward(self, x, mask=None):
+    def forward(self, x, mask = None):
         x_unsqueezed = torch.unsqueeze(x, 0)
 
         query = self.w_q(x_unsqueezed) #(Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model)
@@ -72,6 +76,26 @@ class MultiHeadAttentionBlock(nn.Module):
     
     def loss(self):
         return self.denoising_model_loss
+
+class MultiBlockEncoder(nn.Module):
+    def __init__(self, d_model:int, d_ff:int, h:int, dropout = None, device = None, use_gpu = True, n_blocks: int = 1):
+        super().__init__()
+        self.n_block = n_blocks
+        self.self_Attention_block = MultiHeadAttentionBlock(d_model, h, dropout=dropout, device = device, use_gpu=use_gpu)
+        self.encoder_blocks = []
+        for _ in range(self.n_blocks):
+            encoder_self_attention_block = MultiHeadAttentionBlock(d_model, h, dropout)
+            feed_forward_block = FeedForwardBlock(d_model, d_ff, dropout)
+            encoder_block = EncoderBlock(d_model, encoder_self_attention_block, feed_forward_block, dropout)
+            self.encoder_blocks.append(encoder_block)
+        self.norm = LayerNormalization(d_model)
+
+
+    def forward(self, x, mask):
+        for layer in self.encoder_blocks:
+            x = layer(x, mask)
+        return self.norm(x)
+    
 
 #encoder architecture is the list of dimensions of the layers that starts with the input size, arrive at a bottleneck (encoded features) and then goes back up to input dimension(decoded features, """restoring""" the input)
 class AutoencoderModel(nn.Module):
