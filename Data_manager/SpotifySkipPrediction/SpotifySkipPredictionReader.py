@@ -62,7 +62,7 @@ class SpotifySkipPredictionReader(DataReader):
         from Data_manager.IncrementalSparseMatrix import IncrementalSparseMatrix_FilterIDs
 
         URM_builder = IncrementalSparseMatrix_FilterIDs(preinitialized_col_mapper = self.item_original_ID_to_index, on_new_col = "add",
-                                                        preinitialized_row_mapper = None, on_new_row = "add", dtype = np.bool)
+                                                        preinitialized_row_mapper = None, on_new_row = "add", dtype = bool)
 
 
 
@@ -125,7 +125,7 @@ class SpotifySkipPredictionReader(DataReader):
                                 on_new_col = "add",
                                 preinitialized_row_mapper = self.user_original_ID_to_index,
                                 on_new_row = "add",
-                                dtype = np.bool)
+                                dtype = bool)
 
 
 

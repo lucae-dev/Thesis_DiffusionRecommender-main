@@ -619,7 +619,7 @@ class MultifacetedMovieTrailerFeatureReader(DataReader):
         self.user_original_ID_to_index = movielens20M.get_user_original_ID_to_index_mapper().copy()
 
         self.user_original_ID_to_index = reconcile_mapper_with_removed_tokens(self.user_original_ID_to_index,
-                                                                              np.arange(n_users, dtype=np.int)[np.logical_not(users_to_keep)])
+                                                                              np.arange(n_users, dtype=int)[np.logical_not(users_to_keep)])
 
 
 

@@ -102,7 +102,7 @@ def select_k_cores(URM, k_value = 5, reshape = False):
         user_degree = np.ediff1d(URM.indptr)
 
         to_be_removed = user_degree < k_value
-        to_be_removed[np.array(list(removed_users), dtype=np.int)] = False
+        to_be_removed[np.array(list(removed_users), dtype=int)] = False
 
         if not np.any(to_be_removed):
             convergence_user = True
@@ -126,7 +126,7 @@ def select_k_cores(URM, k_value = 5, reshape = False):
         items_degree = np.ediff1d(URM.indptr)
 
         to_be_removed = items_degree < k_value
-        to_be_removed[np.array(list(removed_items), dtype=np.int)] = False
+        to_be_removed[np.array(list(removed_items), dtype=int)] = False
 
         if not np.any(to_be_removed):
             convergence_item = True

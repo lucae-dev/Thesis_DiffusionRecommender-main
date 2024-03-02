@@ -15,7 +15,8 @@ import torch.nn.functional as F
 class LinearNoiseSchedule(object):
     def __init__(self, start_beta, end_beta, device, noise_timesteps = 1000):
         super(LinearNoiseSchedule).__init__()
-        self._beta_values = torch.linspace(start_beta, end_beta, noise_timesteps, dtype = torch.float64, device=device)
+        dtype = torch.float32 if device.type == 'mps' else torch.float64
+        self._beta_values = torch.linspace(start_beta, end_beta, noise_timesteps, dtype = dtype, device=device)
         alpha = 1. - self._beta_values
         alpha_prod = torch.cumprod(alpha, axis=0, dtype=torch.float)
         self._alpha_values = torch.clamp(alpha_prod, min=0.0, max=1.0)

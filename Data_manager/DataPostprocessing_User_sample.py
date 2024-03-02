@@ -65,7 +65,7 @@ class DataPostprocessing_User_sample(DataPostprocessing):
 
         print("DataReaderPostprocessing_User_sample: Sampling {:.2f}% of all users, their number is {}".format(self.user_quota*100, num_users_to_select))
 
-        user_id_list = np.arange(0, n_users, dtype=np.int)
+        user_id_list = np.arange(0, n_users, dtype=int)
 
         np.random.shuffle(user_id_list)
 

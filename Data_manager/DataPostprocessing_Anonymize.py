@@ -53,10 +53,10 @@ class DataPostprocessing_Anonymize(DataPostprocessing):
 
         # Shuffle ITEMS and USERS in URM
         # The remapping is done as follows: shuffled_items[current_index] -> new index
-        shuffled_items = np.arange(n_items, dtype = np.int)
+        shuffled_items = np.arange(n_items, dtype = int)
         np.random.shuffle(shuffled_items)
 
-        shuffled_users = np.arange(n_users, dtype = np.int)
+        shuffled_users = np.arange(n_users, dtype = int)
         np.random.shuffle(shuffled_users)
 
         loaded_dataset.item_original_ID_to_index = {original_ID:shuffled_items[previous_index] for original_ID,previous_index in loaded_dataset.item_original_ID_to_index.items()}
@@ -78,7 +78,7 @@ class DataPostprocessing_Anonymize(DataPostprocessing):
             ICM_feature_mapper = loaded_dataset.AVAILABLE_ICM_feature_mapper[ICM_name]
 
             n_features = len(ICM_feature_mapper)
-            shuffled_features = np.arange(n_features, dtype = np.int)
+            shuffled_features = np.arange(n_features, dtype = int)
             np.random.shuffle(shuffled_features)
 
             ICM_feature_mapper = {original_ID:shuffled_features[previous_index] for original_ID,previous_index in ICM_feature_mapper.items()}
@@ -99,7 +99,7 @@ class DataPostprocessing_Anonymize(DataPostprocessing):
             UCM_feature_mapper = loaded_dataset.AVAILABLE_UCM_feature_mapper[UCM_name]
 
             n_features = len(UCM_feature_mapper)
-            shuffled_features = np.arange(n_features, dtype = np.int)
+            shuffled_features = np.arange(n_features, dtype = int)
             np.random.shuffle(shuffled_features)
 
             UCM_feature_mapper = {original_ID:shuffled_features[previous_index] for original_ID,previous_index in UCM_feature_mapper.items()}

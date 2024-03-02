@@ -98,7 +98,7 @@ def select_users_with_min_interactions(URM, min_interactions = 5, reshape = Fals
 
     URM = sps.csr_matrix(URM)
     user_to_remove_mask = np.ediff1d(URM.indptr) < min_interactions
-    removed_users = np.arange(0, n_users, dtype=np.int)[user_to_remove_mask]
+    removed_users = np.arange(0, n_users, dtype=int)[user_to_remove_mask]
 
 
     for user in removed_users:
@@ -111,7 +111,7 @@ def select_users_with_min_interactions(URM, min_interactions = 5, reshape = Fals
 
     URM = sps.csc_matrix(URM)
     items_to_remove_mask = np.ediff1d(URM.indptr) == 0
-    removed_items = np.arange(0, n_items, dtype=np.int)[items_to_remove_mask]
+    removed_items = np.arange(0, n_items, dtype=int)[items_to_remove_mask]
 
 
     if URM.data.sum() == 0:

@@ -7,10 +7,9 @@ Created on 09/10/2022
 """
 
 import math
-from TransformerLuca.TransformerArchitecrture.Decoder import DecoderBlock
-from TransformerLuca.TransformerArchitecrture.Encoder import EncoderBlcok, EncoderBlock
 from TransformerLuca.TransformerArchitecrture.FeedForwardBlock import FeedForwardBlock
 from TransformerLuca.TransformerArchitecrture.LayerNormalization import LayerNormalization
+from TransformerLuca.TransformerArchitecrture.ResidualConnection import ResidualConnection
 from torch import nn
 import torch
 
@@ -40,7 +39,9 @@ class MultiHeadAttentionBlock(nn.Module):
 
 
     @staticmethod
-    def attention(query, key, value, mask, dropout: nn.Dropout):
+    def attention(query, key, value, mask, dropout):
+        if (dropout is not None):
+            dropout_layer = nn.Dropout(dropout)
         d_k = query.shape[-1]
         # (Batch, h, Seq_Len,d_k) @((Batch, h, d_k, Seq_Len,))--> (Batch, h, Seq_Len, Seq_Len )
         attention_scores = (query @ key.transpose(-2,-1)/math.sqrt(d_k))
@@ -48,7 +49,7 @@ class MultiHeadAttentionBlock(nn.Module):
             attention_scores.masked_fill(mask == 0, -1e9)
         attention_scores = attention_scores.softmax(dim=-1) 
         if dropout is not None:
-           attention_scores = dropout(attention_scores)
+           attention_scores = dropout_layer(attention_scores)
 
         return (attention_scores@value), attention_scores
 
@@ -76,25 +77,49 @@ class MultiHeadAttentionBlock(nn.Module):
     
     def loss(self):
         return self.denoising_model_loss
+    
+
+class EncoderBlock(nn.Module):
+    def __init__(self, device, features:int, attention_block: MultiHeadAttentionBlock, feed_forward_blcok: FeedForwardBlock, dropout: float ) -> None:
+        super().__init__()
+        self.attention_block = attention_block
+        self.feed_forward_block = feed_forward_blcok
+        self.residual_connections = nn.ModuleList([ResidualConnection(device=device,features=features, dropout=dropout) for _ in range(2)])
+        self.denoising_model_loss = torch.zeros(1, requires_grad = False, device = device)
+
+        
+    def forward(self, x, src_mask = None):
+        x = self.residual_connections[0](x, lambda x: self.attention_block(x, src_mask))
+        x = self.residual_connections[1](x, self.feed_forward_block)
+        return x
+    
+    def loss(self):
+        return self.denoising_model_loss
+    
 
 class MultiBlockEncoder(nn.Module):
     def __init__(self, d_model:int, d_ff:int, h:int, dropout = None, device = None, use_gpu = True, n_blocks: int = 1):
         super().__init__()
-        self.n_block = n_blocks
-        self.self_Attention_block = MultiHeadAttentionBlock(d_model, h, dropout=dropout, device = device, use_gpu=use_gpu)
+        self.n_blocks = n_blocks
+        self.self_attention_block = MultiHeadAttentionBlock(d_model, h, dropout=dropout, device = device, use_gpu=use_gpu)
         self.encoder_blocks = []
         for _ in range(self.n_blocks):
-            encoder_self_attention_block = MultiHeadAttentionBlock(d_model, h, dropout)
-            feed_forward_block = FeedForwardBlock(d_model, d_ff, dropout)
-            encoder_block = EncoderBlock(d_model, encoder_self_attention_block, feed_forward_block, dropout)
+            encoder_self_attention_block = MultiHeadAttentionBlock(d_model, h, dropout=dropout, device = device, use_gpu=use_gpu).to(device)
+            feed_forward_block = FeedForwardBlock(d_model, d_ff, dropout).to(device)
+            encoder_block = EncoderBlock(device, d_model, encoder_self_attention_block, feed_forward_block, dropout).to(device)
             self.encoder_blocks.append(encoder_block)
-        self.norm = LayerNormalization(d_model)
+        self.norm = LayerNormalization(device, d_model).to(device)
+        self.denoising_model_loss = torch.zeros(1, requires_grad = False, device = device)
 
 
-    def forward(self, x, mask):
+
+    def forward(self, x, mask=None):
         for layer in self.encoder_blocks:
             x = layer(x, mask)
         return self.norm(x)
+    
+    def loss(self):
+        return self.denoising_model_loss
     
 
 #encoder architecture is the list of dimensions of the layers that starts with the input size, arrive at a bottleneck (encoded features) and then goes back up to input dimension(decoded features, """restoring""" the input)
