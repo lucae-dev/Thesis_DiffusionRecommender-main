@@ -2,7 +2,7 @@ import math
 import torch 
 import torch.nn as nn 
 
-class MultiHeadAttentionBlock(nn.module):
+class MultiHeadAttentionBlock(nn.Module):
 
     def __init__(self, d_model:int, h:int, dropout:float) -> None:
         super().__init__()

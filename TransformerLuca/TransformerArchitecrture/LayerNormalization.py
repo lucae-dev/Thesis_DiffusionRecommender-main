@@ -23,12 +23,11 @@ x''j = x'j*alpha + bias
 """
 
 class LayerNormalization(nn.Module):
-
-    def __init__(self, eps: float = 10**-6) -> None:
-        super.__init__()
+    def __init__(self, device, features: int, eps: float = 10**-6) -> None:
+        super().__init__()
         self.eps = eps
-        self.alpha = nn.Parameter(torch.ones[1]) #initialiazed to 1 since it's multiplicative parameter
-        self.bias = nn.Parameter(torch.zeros[1]) #initialiazed to 0 since it's the additive parameter
+        self.alpha = nn.Parameter(torch.ones(features, device = device)) #initialiazed to 1 since it's multiplicative parameter
+        self.bias = nn.Parameter(torch.zeros(features, device = device)) #initialiazed to 0 since it's the additive parameter
 
     def forward(self, x):
         mean = x.mean(dim = -1, keepdim = True)

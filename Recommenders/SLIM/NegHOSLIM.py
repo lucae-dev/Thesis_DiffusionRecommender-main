@@ -67,7 +67,7 @@ from Recommenders.Recommender_utils import check_matrix
 #     return ii_pairs
 #
 # def create_matrix_Z(ii_pairs, X):
-#     MM = sps.lil_matrix((len(ii_pairs[0]), X.shape[1]),    dtype=np.float)
+#     MM = sps.lil_matrix((len(ii_pairs[0]), X.shape[1]),    dtype=float)
 #     MM[np.arange(MM.shape[0]) , ii_pairs[0]   ]=1.0
 #     MM[np.arange(MM.shape[0]) , ii_pairs[1]   ]=1.0
 #
@@ -99,7 +99,7 @@ def create_list_feature_pairs_topn(XtX, topn):
 
 
 def create_matrix_Z(ii_pairs, X):
-    MM = np.zeros( (len(ii_pairs[0]), X.shape[1]),    dtype=np.float)
+    MM = np.zeros( (len(ii_pairs[0]), X.shape[1]),    dtype=float)
     MM[np.arange(MM.shape[0]) , ii_pairs[0]   ]=1.0
     MM[np.arange(MM.shape[0]) , ii_pairs[1]   ]=1.0
     CCmask = 1.0-MM    # see Eq. 8 in the paper
@@ -138,8 +138,8 @@ def create_list_feature_pairs_topn_sps(XtX, topn):
 
 def create_matrix_Z_sps(ii_pairs, X):
     # MM   = |n_feature_pairs|x|n_items|
-    # MM = np.zeros( (len(ii_pairs[0]), X.shape[1]),    dtype=np.float)
-    MM = sps.lil_matrix((len(ii_pairs[0]), X.shape[1]),    dtype=np.float)
+    # MM = np.zeros( (len(ii_pairs[0]), X.shape[1]),    dtype=float)
+    MM = sps.lil_matrix((len(ii_pairs[0]), X.shape[1]),    dtype=float)
     MM[np.arange(MM.shape[0]), ii_pairs[0] ]=1.0
     MM[np.arange(MM.shape[0]), ii_pairs[1] ]=1.0
 
@@ -261,10 +261,10 @@ class NegHOSLIMRecommender_dense(BaseRecommender, Incremental_Training_Early_Sto
         self._print("Precomputing BB and CC... done in {:.2f} {}.".format(*seconds_to_biggest_unit(time.time()-start_time)))
 
         # initialize
-        self.CC = np.zeros( (ZtZ.shape[0], self.XtX.shape[0]),dtype=np.float )
-        self.DD = np.zeros( (ZtZ.shape[0], self.XtX.shape[0]),dtype=np.float )
-        self.UU = np.zeros( (ZtZ.shape[0], self.XtX.shape[0]),dtype=np.float ) # is Gamma in paper
-        self.BB = np.zeros( (self.URM_train.shape[0], self.URM_train.shape[0]),dtype=np.float )
+        self.CC = np.zeros( (ZtZ.shape[0], self.XtX.shape[0]),dtype=float )
+        self.DD = np.zeros( (ZtZ.shape[0], self.XtX.shape[0]),dtype=float )
+        self.UU = np.zeros( (ZtZ.shape[0], self.XtX.shape[0]),dtype=float ) # is Gamma in paper
+        self.BB = np.zeros( (self.URM_train.shape[0], self.URM_train.shape[0]),dtype=float )
 
         ########################### Earlystopping
 
@@ -451,10 +451,10 @@ class NegHOSLIMRecommender(BaseRecommender, Incremental_Training_Early_Stopping)
         self._print("Precomputing BB and CC... done in {:.2f} {}.".format(*seconds_to_biggest_unit(time.time()-start_time)))
 
         # initialize
-        self.CC = np.zeros((self.n_feature_pairs, self.n_items), dtype=np.float )
-        self.DD = np.zeros((self.n_feature_pairs, self.n_items), dtype=np.float )
-        self.UU = np.zeros((self.n_feature_pairs, self.n_items), dtype=np.float ) # is Gamma in paper
-        self.BB = np.zeros((self.n_items, self.n_items), dtype=np.float )
+        self.CC = np.zeros((self.n_feature_pairs, self.n_items), dtype=float )
+        self.DD = np.zeros((self.n_feature_pairs, self.n_items), dtype=float )
+        self.UU = np.zeros((self.n_feature_pairs, self.n_items), dtype=float ) # is Gamma in paper
+        self.BB = np.zeros((self.n_items, self.n_items), dtype=float )
 
         ########################### Earlystopping
 
@@ -676,7 +676,7 @@ class NegHOSLIMElasticNetRecommender(BaseRecommender):
                 nonzero_model_coef_value = nonzero_model_coef_value[relevant_items_partition]
 
             similarity_builder.add_data_lists(row_list_to_add=nonzero_model_coef_index,
-                                              col_list_to_add=np.ones(len(nonzero_model_coef_index), dtype = np.int) * current_item,
+                                              col_list_to_add=np.ones(len(nonzero_model_coef_index), dtype = int) * current_item,
                                               data_list_to_add=nonzero_model_coef_value)
 
 
@@ -853,7 +853,7 @@ class NegHOSLIMLSQR(NegHOSLIMElasticNetRecommender):
                     nonzero_model_coef_value = nonzero_model_coef_value[relevant_items_partition]
 
                 similarity_builder.add_data_lists(row_list_to_add=nonzero_model_coef_index,
-                                                  col_list_to_add=np.ones(len(nonzero_model_coef_index), dtype = np.int) * current_item,
+                                                  col_list_to_add=np.ones(len(nonzero_model_coef_index), dtype = int) * current_item,
                                                   data_list_to_add=nonzero_model_coef_value)
 
 

@@ -29,7 +29,7 @@ class MyTestCase(unittest.TestCase):
 
         user_batch_size = 1000
 
-        user_id_list = np.arange(n_users, dtype=np.int)
+        user_id_list = np.arange(n_users, dtype=int)
         np.random.shuffle(user_id_list)
         user_id_list = user_id_list[:user_batch_size]
 
@@ -45,7 +45,7 @@ class MyTestCase(unittest.TestCase):
 
         item_batch_size = 500
 
-        item_id_list = np.arange(n_items, dtype=np.int)
+        item_id_list = np.arange(n_items, dtype=int)
         np.random.shuffle(item_id_list)
         item_id_list = item_id_list[:item_batch_size]
 
@@ -57,7 +57,7 @@ class MyTestCase(unittest.TestCase):
         self.assertFalse(np.any(np.isposinf(item_scores)), "item_scores contains +np.inf values")
 
         #Check items not in list have a score of -np.inf
-        item_id_not_to_compute = np.ones(n_items, dtype=np.bool)
+        item_id_not_to_compute = np.ones(n_items, dtype=bool)
         item_id_not_to_compute[item_id_list] = False
 
         self.assertTrue(np.all(np.isneginf(item_scores[:,item_id_not_to_compute])), "item_scores contains scores for items that should not be computed")

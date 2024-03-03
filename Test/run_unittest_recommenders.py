@@ -170,7 +170,7 @@ class MyTestSuite(object):
 
             end_user = min(start_user+batch_size, n_users)
 
-            user_id_batch = np.arange(start_user, end_user, dtype = np.int)
+            user_id_batch = np.arange(start_user, end_user, dtype = int)
             recommendations_batch, scores_batch = self.recommender_instance.recommend(user_id_batch, cutoff = cutoff, items_to_compute = None, return_scores = True)
 
             self.assertEqual(scores_batch.shape, (len(user_id_batch), n_items))

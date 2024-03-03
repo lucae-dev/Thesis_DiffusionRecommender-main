@@ -16,7 +16,7 @@ where:
 
 """
 
-class FeedForwardBlock(nn.module):
+class FeedForwardBlock(nn.Module):
     
     def __init__(self, d_model: int, d_ff: int, dropout:float) -> None:
         super().__init__()

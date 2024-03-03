@@ -172,7 +172,7 @@ class GraphFilterCF_W_Recommender(BaseItemSimilarityMatrixRecommender):
                     this_column_weights = this_column_weights[non_zero_mask]
 
                 similarity_builder.add_data_lists(row_list_to_add=relevant_items_partition,
-                              col_list_to_add=np.ones(len(relevant_items_partition), dtype = np.int) *  item_original_index,
+                              col_list_to_add=np.ones(len(relevant_items_partition), dtype = int) *  item_original_index,
                               data_list_to_add=this_column_weights)
 
 
