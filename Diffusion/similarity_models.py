@@ -46,13 +46,13 @@ class TwoRandomWalksSampler:
         self.warm_user_ids = warm_user_ids
 
 
-    def sample_batch(self, n):
-        random_user = np.random.randint(0, self.n_user)
+    def sample_batch(self, n, user = None):
+        random_user = np.random.randint(0, self.n_user) if user == None else user
         similarity_scores = self.similarity_matrix[random_user, :].toarray().flatten()
         
         if n > 1:  
-            top_indices = np.argpartition(-similarity_scores, range(n-1))[:n-1]  # Select top n-1 similar users
-            batch_users = np.append(top_indices, random_user)
+            top_indices = np.argpartition(-similarity_scores, range(n))[:n]  # Select top n similar users, should contain also random user (most similar to itself)
+            batch_users = top_indices # np.append(top_indices, random_user)
         else:  
             batch_users = np.array([random_user])
         
