@@ -72,7 +72,16 @@ class MultiBlockAttentionDiffusionRecommenderSimilarity(BaseRecommender, Increme
                                                         requires_grad=False).to_dense()
         
         user_profile_inference = self.diffusion_model.inference(user_batch_tensor, self.inference_timesteps)
-        
+        print(type(user_profile_inference))
+        print(user_profile_inference.shape)
+
+        user_profile_inf_s = [] #
+        for i, _ in enumerate(user_id_array): #
+            user_profile_inf_s.append(user_profile_inference[i]) #
+            user_profile_inf_s_temp = np.array(user_profile_inf_s)
+            print(type(user_profile_inf_s_temp)) #
+            print(user_profile_inf_s_temp.shape) #
+
         if items_to_compute is None:
             item_scores = user_profile_inference
         else:
@@ -330,6 +339,73 @@ class MultiBlockAttentionDiffusionRecommenderSimilarity(BaseRecommender, Increme
 
 
 class MultiBlockAttentionDiffusionRecommenderInfSimilarity(MultiBlockAttentionDiffusionRecommenderSimilarity):
+    RECOMMENDER_NAME = "MultiBlockAttentionDiffusionRecommenderSimilarityINF"
+
+    def _run_epoch(self, num_epoch):
+
+        self.current_epoch_training_loss = 0
+        self.diffusion_model.train()
+
+        #batches must become number of batches, the batch size will another parameter -> add parameter n_batches
+        num_batches_per_epoch = math.ceil(len(self.warm_user_ids) / self.batch_size)
+
+        len_warm_ids = len(self.warm_user_ids)
+
+        #iterator = tqdm(range(num_batches_per_epoch)) if self.show_progress_bar else range(num_batches_per_epoch)
+        iterator = tqdm(range(len_warm_ids)) if self.show_progress_bar else range(len_warm_ids)
+        i = 0
+        for _ in iterator:
+
+            #user_batch = torch.LongTensor(np.random.choice(self.warm_user_ids, size=self.batch_size))
+            user_batch = self.sampler.sample_batch(self.batch_size, self.warm_user_ids[i])
+            i=i+1
+            user_batch_tensor = self.URM_train[user_batch]
+            # Convert CSR matrix to a dense numpy array directly
+            user_batch_dense_np = user_batch_tensor.toarray()
+
+            # Convert the dense numpy array to a PyTorch tensor
+            # and move it to the appropriate device
+            if str(self.device) == 'mps':
+                user_batch_tensor = torch.tensor(user_batch_dense_np, dtype=torch.float32, device='cpu').to('mps')
+            else:
+            # Transferring only the sparse structure to reduce the data transfer
+                user_batch_tensor = torch.sparse_csr_tensor(user_batch_tensor.indptr,
+                                                            user_batch_tensor.indices,
+                                                            user_batch_tensor.data,
+                                                            size=user_batch_tensor.shape,
+                                                            dtype=torch.float32,
+                                                            device=self.device,
+                                                            requires_grad=False).to_dense()
+            
+            #here you coudl transform the user profile to reduce dimensionality before passing tbem to the forward, the forward will learn this way to predict the reduced-size-user-profile (which is like an embedding), not the normal user profile (or the noise applied to embeddign)
+            # you can do it just passing the user profiles trough a linear layer, just take the encoder of an autoencoder and get it trough it
+
+            # Clear previously computed gradients
+            self._optimizer.zero_grad()
+
+            # Sample timestamps, !!!! MIGHT HAVE TO CHANGE THE LEN??!!!
+            t = torch.randint(0, self.noise_timesteps, (len(user_batch_tensor),), device=self.device, dtype=torch.long)
+
+            # Compute prediction for each element in batch
+            loss = self.forward(user_batch_tensor, t)
+
+            # Compute gradients given current loss
+            loss.backward()
+            # torch.nn.utils.clip_grad_norm(self._model.parameters(), max_norm=1.0)
+
+            # Apply gradient using the selected optimizer
+            self._optimizer.step()
+
+            self.current_epoch_training_loss += loss.item()
+
+
+        if (self.verbose == True):
+         self._print("Epoch {}, loss {:.2E}".format(num_epoch, self.current_epoch_training_loss))
+        # self.loss_list.append(self.current_epoch_training_loss)
+
+
+
+
     def _compute_item_score(self, user_id_array, items_to_compute = None):
         """
 
@@ -338,12 +414,11 @@ class MultiBlockAttentionDiffusionRecommenderInfSimilarity(MultiBlockAttentionDi
         :return:
         """          
         num_users = len(user_id_array)
-        output_dim = self.n_items # The dimensionality of your inference output for one user
-        user_profile_inference = torch.empty((num_users, output_dim), dtype=torch.float32, device=self.device)
-
+        output_dim = self.n_items 
+        user_profile_inference_temp = []
         for i, user_id in enumerate(user_id_array):
-            user_batch = self.sampler.sample_batch(self.batch_size, user_id)  # Sample batch with current user_id
-            user_batch_tensor = self.URM_train[user_batch].toarray()  # Assuming this is necessary for your model
+            user_batch = self.sampler.sample_batch(self.batch_size, user_id)  
+            user_batch_tensor = self.URM_train[user_batch].toarray()  
             
             # Convert directly on the appropriate device if possible to avoid data transfer overhead
             if str(self.device) == 'mps':
@@ -352,11 +427,16 @@ class MultiBlockAttentionDiffusionRecommenderInfSimilarity(MultiBlockAttentionDi
                 user_batch_tensor = torch.tensor(user_batch_tensor, dtype=torch.float32, device=self.device)
             
             # Perform inference and store the result directly in the preallocated tensor
-            user_profile_inference.append(self.diffusion_model.inference(user_batch_tensor, self.inference_timesteps)[0])
-            print(i + "/" + len(user_id_array))
+            user_profile_inference_temp.append(self.diffusion_model.inference(user_batch_tensor, self.inference_timesteps)[0])
+            user_profile_inference_temp_arr = np.array(user_profile_inference_temp)
+            print("inference" + str(i) + "/" + str(num_users))
+            #print(type(user_profile_inference_temp_arr))
+            #print(user_profile_inference_temp_arr.shape)
         
-        user_profile_inference = torch.cat(user_profile_inference, dim=0)
-        
+        user_profile_inference = np.array(user_profile_inference_temp)
+        print(type(user_profile_inference))
+        print(user_profile_inference.shape)
+
         if items_to_compute is None:
             item_scores = user_profile_inference
         else:
