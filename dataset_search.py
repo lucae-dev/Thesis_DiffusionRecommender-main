@@ -1,0 +1,196 @@
+import ast
+from Data_manager.DataSplitter_leave_k_out import DataSplitter_leave_k_out
+from Data_manager.DataPostprocessing_K_Cores import DataPostprocessing_K_Cores
+from Data_manager.data_consistency_check import assert_disjoint_matrices, assert_implicit_data
+from Evaluation.Evaluator import EvaluatorHoldout
+from Data_manager import *
+from Data_manager.Movielens.Movielens1MReader import Movielens1MReader
+from Diffusion.MultiBlockSimilarityAttentionDiffusionRecommender import MultiBlockSimilarityAttentionDiffusionRecommender
+from Recommenders.DataIO import DataIO
+import optuna
+import numpy as np
+import pandas as pd
+import os
+from Diffusion.MultiBlockAttentionDiffusionRecommenderSimilarity import MultiBlockAttentionDiffusionRecommenderSimilarity
+import pandas as pd
+
+def _make_data_implicit(dataSplitter):
+
+    dataSplitter.SPLIT_URM_DICT["URM_train"].data = np.ones_like(dataSplitter.SPLIT_URM_DICT["URM_train"].data)
+    dataSplitter.SPLIT_URM_DICT["URM_validation"].data = np.ones_like(dataSplitter.SPLIT_URM_DICT["URM_validation"].data)
+    dataSplitter.SPLIT_URM_DICT["URM_test"].data = np.ones_like(dataSplitter.SPLIT_URM_DICT["URM_test"].data)
+
+    URM_train, URM_validation, URM_test = dataSplitter.get_holdout_split()
+
+    assert_disjoint_matrices([URM_train, URM_validation, URM_test])
+
+
+def load_data(dataset_class, split_type, preprocessing, k_cores):
+
+    from Data_manager.DataSplitter_Holdout import DataSplitter_Holdout
+
+    dataset_reader = dataset_class()
+
+    if k_cores > 0:
+        dataset_reader = DataPostprocessing_K_Cores(dataset_reader, k_cores_value = k_cores)
+
+    result_folder_path = "/Users/lucaortolomo/Desktop/TESI/Thesis_DiffusionRecommender-main/Hyperparameter_databases/hyperparameter_database_2024_02/{}/{}/hyperopt_{}/{}/".format("k_{}_cores".format(k_cores) if k_cores > 0 else "full",
+                                                           "original",
+                                                           split_type,
+                                                           dataset_reader._get_dataset_name())
+
+    if split_type == "random_holdout_80_10_10":
+        dataSplitter = DataSplitter_Holdout(dataset_reader, user_wise=False, split_interaction_quota_list=[80, 10, 10], forbid_new_split=True)
+
+    elif split_type == "leave_1_out":
+        dataSplitter = DataSplitter_leave_k_out(dataset_reader, k_out_value=1, use_validation_set=True, leave_random_out=True, forbid_new_split=True)
+    else:
+        raise ValueError
+
+    data_folder_path = result_folder_path + "data/"
+    print(data_folder_path)
+    dataSplitter.load_data(save_folder_path=data_folder_path)
+
+    if preprocessing == "implicit":
+        _make_data_implicit(dataSplitter)
+
+    model_folder_path = "/Users/lucaortolomo/Desktop/TESI/Thesis_DiffusionRecommender-main/Hyperparameter_databases/hyperparameter_database_2024_02/{}/{}/hyperopt_{}/{}/models/".format("k_{}_cores".format(k_cores) if k_cores > 0 else "full",
+                                                                           preprocessing,
+                                                                           split_type,
+                                                                           dataset_reader._get_dataset_name())
+    return dataSplitter, model_folder_path
+
+def objective(trial):
+
+    cutoff = 10
+    metric = 'NDCG'
+    directory_path = '/Users/lucaortolomo/Desktop/TESI/Thesis_DiffusionRecommender-main/Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
+
+    if not os.path.exists(directory_path):
+        os.makedirs(directory_path)
+        print(f"Directory {directory_path} created.")
+
+    batch_size = trial.suggest_categorical('batch_size', [64, 128, 256, 512])
+    embeddings_dim = trial.suggest_categorical('embeddings_dim', [64, 128, 256, 512, 1024])
+    heads = trial.suggest_categorical('heads', [4, 8, 16])
+    attention_blocks = trial.suggest_categorical('attention_blocks', [1, 2, 3,])
+    d_ff = trial.suggest_categorical('d_ff', [1024, 2048, 4096])
+    epochs = trial.suggest_int('epochs', 30, 400)
+    l2_reg = trial.suggest_loguniform('l2_reg', 1e-5, 1e-3)
+    learning_rate = trial.suggest_loguniform('learning_rate', 1e-4, 1e-2)
+    noise_timesteps = trial.suggest_int('noise_timesteps', 3, 60)
+    inference_timesteps = trial.suggest_int('inference_timesteps', 1, noise_timesteps-1)
+    start_beta = trial.suggest_float('start_beta', 0.00001, 0.001)
+    end_beta = trial.suggest_float('end_beta', 0.01, 0.2)
+
+    # Initialize and train the recommender
+
+    diffusion_model = MultiBlockSimilarityAttentionDiffusionRecommender(URM_train = URM_train, verbose = False, use_gpu = True)
+
+    diffusion_model.fit(
+                      epochs=epochs,
+                      batch_size=batch_size,
+                      embeddings_dim=embeddings_dim,
+                      heads=heads,
+                      attention_blocks = attention_blocks,
+                      d_ff = d_ff,
+                      l2_reg=l2_reg,
+                      learning_rate=learning_rate,
+                      noise_timesteps = noise_timesteps,
+                      inference_timesteps = inference_timesteps,
+                      start_beta = start_beta,
+                      end_beta = end_beta
+    )
+
+    result_df, _ = evaluator_validation.evaluateRecommender(diffusion_model)
+    hyperparams = {
+    'batch_size': batch_size,
+    'embeddings_dim': embeddings_dim,
+    'heads': heads,
+    'attention_blocks': attention_blocks,
+    'd_ff': d_ff,
+    'epochs': epochs,
+    'l2_reg': l2_reg,
+    'learning_rate': learning_rate,
+    'noise_timesteps': noise_timesteps,
+    'inference_timesteps': inference_timesteps,
+    'start_beta': start_beta,
+    'end_beta': end_beta}
+
+    result_df['hyperparams'] = str(hyperparams)
+
+    filename = directory_path + '/' + diffusion_model.RECOMMENDER_NAME + ".csv"
+    print(str(filename))
+    # Check if file exists
+    if os.path.isfile(filename):
+        # If it exists, append without writing the header
+        pd.DataFrame(result_df.loc[cutoff]).transpose().to_csv(filename, mode='a', header=False, index=False)
+    else:
+        # If it doesn't exist, create it, write the header
+        pd.DataFrame(result_df.loc[cutoff]).transpose().to_csv(filename, mode='w', header=True, index=False)
+
+    return result_df.loc[cutoff][metric]
+
+
+
+
+if __name__ == '__main__':
+
+    k_cores = 0
+    split_type = "random_holdout_80_10_10"
+    preprocessing = "implicit"
+    dataset_class = Movielens1MReader
+    cutoff_to_optimize = 10
+    cutoff_list = [5, 10, 20, 30, 40, 50, 100]
+
+    directory_path = '/Users/lucaortolomo/Desktop/TESI/Thesis_DiffusionRecommender-main/Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
+
+    if not os.path.exists(directory_path):
+        os.makedirs(directory_path)
+        print(f" !!!! Directory {directory_path} created.")
+
+    dataSplitter, model_folder_path = load_data(dataset_class, split_type, preprocessing, k_cores)
+
+
+    URM_train, URM_validation, URM_test = dataSplitter.get_holdout_split()
+    URM_train_last_test = URM_train + URM_validation
+
+    # Ensure disjoint test-train split
+    assert_disjoint_matrices([URM_train, URM_validation, URM_test])
+
+    # Ensure implicit data
+    if preprocessing == "implicit":
+        assert_implicit_data([URM_train, URM_validation, URM_test, URM_train_last_test])
+
+    dataIO = DataIO(folder_path=model_folder_path)
+    evaluator_validation = EvaluatorHoldout(URM_validation, cutoff_list = cutoff_list)
+    evaluator_validation_earlystopping = EvaluatorHoldout(URM_validation, cutoff_list = [cutoff_to_optimize])
+    evaluator_test = EvaluatorHoldout(URM_test, cutoff_list = cutoff_list)
+
+
+    # Load optimal hyperparams
+    recommender_instance = MultiBlockSimilarityAttentionDiffusionRecommender(URM_train_last_test)
+    #search_metadata = {'batch_size': 256, 'embeddings_dim': 512, 'heads': 1, 'attention_blocks': 3, 'd_ff': 4096, 'epochs': 336, 'l2_reg': 0.0007440687899631993, 'learning_rate': 0.00036441971846935237, 'noise_timesteps': 81, 'inference_timesteps': 6, 'start_beta': 0.0006551779118897007, 'end_beta': 0.01539082762973255}# dataIO.load_data(P3alphaRecommender.RECOMMENDER_NAME + "_metadata")
+    #optimal_hyperparams = search_metadata# search_metadata["hyperparameters_best"]
+    
+    study = optuna.create_study(direction="maximize")
+    study.optimize(objective, n_trials=50, show_progress_bar=True)
+
+
+    directory_path = '/Users/lucaortolomo/Desktop/TESI/Thesis_DiffusionRecommender-main/Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
+    filename = directory_path + '/' + recommender_instance.RECOMMENDER_NAME + ".csv"
+
+    df =  pd.read_csv(filename)
+    optimal_hyperparams_str = df.loc[df['NDCG'].idxmax(), 'hyperparams']
+    optimal_hyperparams = ast.literal_eval(optimal_hyperparams_str)
+    print(optimal_hyperparams)
+    # Fit model with optimal hyperparameters
+    recommender_instance.fit(**optimal_hyperparams)
+    result_df, result_str = evaluator_test.evaluateRecommender(recommender_instance)
+    print(result_str)
+    print("fine esperimento!")
+
+
+
+
+
