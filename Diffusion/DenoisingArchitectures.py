@@ -19,7 +19,7 @@ import torch
 #Input to forward -> (xb, xb, xb, null) with xb: (n_of_batches, batch, emb_dim)
 class MultiHeadAttentionBlock(nn.Module):
 
-    def __init__(self, d_model:int, h:int, dropout = None, device = None, use_gpu = True) -> None:
+    def __init__(self, d_model:int, h:int, dropout = None, device = None, use_gpu = True, seq_len = None, similarity_weight: int = 1) -> None:
         super().__init__()
         self.d_model = d_model
         self.h = h
@@ -29,6 +29,10 @@ class MultiHeadAttentionBlock(nn.Module):
         self.w_q = nn.Linear(d_model, d_model) #query layer
         self.w_k = nn.Linear(d_model,d_model) #key layer
         self.w_v = nn.Linear(d_model,d_model) # value layer
+        self.similarity_weight = similarity_weight
+        
+        if seq_len is not None:
+            self.w_s = nn.Linear(seq_len, seq_len)
 
         self.w_o = nn.Linear(d_model,d_model) #output layer
         self.dropout = dropout
@@ -39,12 +43,18 @@ class MultiHeadAttentionBlock(nn.Module):
 
 
     @staticmethod
-    def attention(query, key, value, mask, dropout):
+    def attention(query, key, value, mask, dropout, similarity_matrix = None, similarity_weight: int = 1):
         if (dropout is not None):
             dropout_layer = nn.Dropout(dropout)
         d_k = query.shape[-1]
         # (Batch, h, Seq_Len,d_k) @((Batch, h, d_k, Seq_Len,))--> (Batch, h, Seq_Len, Seq_Len )
         attention_scores = (query @ key.transpose(-2,-1)/math.sqrt(d_k))
+
+        if similarity_matrix is not None:
+            # Adjust similarity_matrix shape for broadcasting: (Batch, 1, Seq_Len, Seq_Len) "for the heads"
+            similarity_matrix = similarity_matrix.unsqueeze(1)
+            attention_scores = attention_scores + similarity_matrix*similarity_weight
+
         if mask is not None:
             attention_scores.masked_fill(mask == 0, -1e9)
         attention_scores = attention_scores.softmax(dim=-1) 
@@ -55,20 +65,30 @@ class MultiHeadAttentionBlock(nn.Module):
 
         #modified to accept as input a batch of user profiles noised emb and return a batch of denoised user profiles emb
         #mask avoids some input to see at others (for sequence models is useful to not make previous words the future ones)
-    def forward(self, x, mask = None):
+    def forward(self, x, similarity_matrix = None, mask = None):
         x_unsqueezed = torch.unsqueeze(x, 0)
+
+        if similarity_matrix is not None:
+            similarity_matrix_dense = similarity_matrix.todense()  # Convert csr_matrix to a dense numpy array
+            similarity_matrix_tensor = torch.tensor(similarity_matrix_dense, dtype=torch.float32).to(self.device)  # Convert numpy array to tensor
+            similarity_matrix_unsqueesed = torch.unsqueeze(similarity_matrix_tensor, 0)
+            similarity = similarity_matrix_unsqueesed # self.w_s(similarity_matrix_unsqueesed)
+        else:
+            similarity = None
+
+        
 
         query = self.w_q(x_unsqueezed) #(Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model)
         key = self.w_k(x_unsqueezed) #(Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model)
         value = self.w_v(x_unsqueezed) #(Batch, Seq_Len, d_model) --> (Batch, Seq_Len, d_model)
 
         #here we basically divide the 'embeddings' of dimension domodel in h parts of dimension d_k
-        #(Batch, Seq_Len, d_model)-- >(Batch,Seq_Len, h, d_k) --transpose-->(Batch,h,Seq_Len,d_k)
+        #(Batch, Seq_Len, d_model)-- >(Batch, Seq_Len, h, d_k) --transpose-->(Batch,h,Seq_Len,d_k)
         query = query.view(query.shape[0], query.shape[1], self.h, self.d_k).transpose(1,2) #transpose switches the second(1) and third (2)dimension
         key = key.view(key.shape[0], key.shape[1], self.h, self.d_k).transpose(1,2)
         value = value.view(value.shape[0], value.shape[1], self.h, self.d_k).transpose(1,2)
 
-        x,self.attention_scores = MultiHeadAttentionBlock.attention(query, key, value, mask, self.dropout)
+        x,self.attention_scores = MultiHeadAttentionBlock.attention(query, key, value, mask, self.dropout, similarity, self.similarity_weight)
 
         #(Batch, h, Seq_Len, d_k) -- > (Batch, Seq_Len, h, d_k) --> (Batch,Seq_Len, d_model)
         x = x.transpose(1,2).contiguous().view(x.shape[0], -1, self.h * self.d_k)
@@ -88,8 +108,8 @@ class EncoderBlock(nn.Module):
         self.denoising_model_loss = torch.zeros(1, requires_grad = False, device = device)
 
         
-    def forward(self, x, src_mask = None):
-        x = self.residual_connections[0](x, lambda x: self.attention_block(x, src_mask))
+    def forward(self, x, similarity_matrix = None, src_mask = None):
+        x = self.residual_connections[0](x, lambda x: self.attention_block(x, similarity_matrix, src_mask))
         x = self.residual_connections[1](x, self.feed_forward_block)
         return x
     
@@ -98,13 +118,13 @@ class EncoderBlock(nn.Module):
     
 
 class MultiBlockEncoder(nn.Module):
-    def __init__(self, d_model:int, d_ff:int, h:int, dropout = None, device = None, use_gpu = True, n_blocks: int = 1):
+    def __init__(self, d_model:int, d_ff:int, h:int, dropout = None, device = None, use_gpu = True, n_blocks: int = 1, seq_len: int = None, similarity_weight: int = 1):
         super().__init__()
         self.n_blocks = n_blocks
-        self.self_attention_block = MultiHeadAttentionBlock(d_model, h, dropout=dropout, device = device, use_gpu=use_gpu)
+        self.self_attention_block = MultiHeadAttentionBlock(d_model, h, dropout=dropout, device = device, use_gpu=use_gpu, similarity_weight = similarity_weight)
         self.encoder_blocks = []
         for _ in range(self.n_blocks):
-            encoder_self_attention_block = MultiHeadAttentionBlock(d_model, h, dropout=dropout, device = device, use_gpu=use_gpu).to(device)
+            encoder_self_attention_block = MultiHeadAttentionBlock(d_model, h, dropout=dropout, device = device, use_gpu=use_gpu, seq_len = seq_len).to(device)
             feed_forward_block = FeedForwardBlock(d_model, d_ff, dropout).to(device)
             encoder_block = EncoderBlock(device, d_model, encoder_self_attention_block, feed_forward_block, dropout).to(device)
             self.encoder_blocks.append(encoder_block)
@@ -113,9 +133,9 @@ class MultiBlockEncoder(nn.Module):
 
 
 
-    def forward(self, x, mask=None):
+    def forward(self, x, similarity_matrix = None, mask=None):
         for layer in self.encoder_blocks:
-            x = layer(x, mask)
+            x = layer(x, similarity_matrix, mask)
         return self.norm(x)
     
     def loss(self):

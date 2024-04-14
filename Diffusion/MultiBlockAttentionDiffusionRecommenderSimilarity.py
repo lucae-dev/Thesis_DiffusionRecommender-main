@@ -20,7 +20,7 @@ class MultiBlockAttentionDiffusionRecommenderSimilarity(BaseRecommender, Increme
 
     RECOMMENDER_NAME = "MultiBlockAttentionDiffusionRecommenderSimilarity"
 
-    def __init__(self, URM_train, use_gpu = True, verbose = True):
+    def __init__(self, URM_train, use_gpu = True, verbose = True, implicit = False):
         super(MultiBlockAttentionDiffusionRecommenderSimilarity, self).__init__(URM_train, verbose = verbose)
 
         if use_gpu:
@@ -188,14 +188,14 @@ class MultiBlockAttentionDiffusionRecommenderSimilarity(BaseRecommender, Increme
     def _update_best_model(self):
         self._model_best = copy.deepcopy(self.diffusion_model.state_dict())
 
-    def forward(self, x_start_batch, t):
+    def forward(self, x_start_batch, t, similarity_matrix = None):
         """
 
         :param x_start:
         :param t:
         :return:
         """
-        return self.diffusion_model.forward(x_start_batch, t)
+        return self.diffusion_model.forward(x_start_batch, t, similarity_matrix = similarity_matrix)
 
     def _run_epoch(self, num_epoch):
 

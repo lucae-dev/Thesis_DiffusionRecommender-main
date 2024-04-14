@@ -126,7 +126,7 @@ class _GaussianDiffusionModel(nn.Module):
 
         return loss_batch
 
-    def sample_from_user_profile(self, user_profile, inference_timesteps):
+    def sample_from_user_profile(self, user_profile, inference_timesteps, similarity_matrix = None):
         """
         # TODO check math
         :param user_profile:
@@ -142,7 +142,7 @@ class _GaussianDiffusionModel(nn.Module):
             for timestep in range(inference_timesteps, 0, -1):
                 user_profile_inference = user_profile_inference # + self.positional_encoding.get_encoding(torch.tensor([timestep], device=user_profile.device))
 
-                user_profile_inference = self.denoiser_model.forward(user_profile_inference)
+                user_profile_inference = self.denoiser_model.forward(user_profile_inference, similarity_matrix = similarity_matrix)
 
                 posterior_mean = user_profile * self.noise_schedule._posterior_mean_c_x_start[timestep] + user_profile_inference * self.noise_schedule._posterior_mean_c_x_t[timestep]
 

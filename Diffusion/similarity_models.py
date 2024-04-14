@@ -5,6 +5,7 @@ from scipy.sparse.csgraph import connected_components
 import numpy as np
 from scipy.sparse import csr_matrix, diags
 from scipy.sparse.csgraph import connected_components
+import torch
 
 class TwoRandomWalksSimilarity:
     def __init__(self, URM) -> None:
@@ -36,6 +37,9 @@ class TwoRandomWalksSimilarity:
         graph = self.urm_to_graph(URM)
         num_users = URM.shape[0]
         user_similarity = self.random_walks(graph, num_users)
+        #print(type(user_similarity))
+        #print('tttt')
+        # user_similarity = softmax_csr(user_similarity)
         return user_similarity
 
 class TwoRandomWalksSampler:
@@ -77,3 +81,27 @@ class TwoRandomWalksSampler:
         batch_users = np.array(self.warm_user_ids)[batch_user_idxs]
         
         return batch_users
+    
+    def get_similarity_matrix(self):
+        return self.similarity_matrix
+
+
+
+def softmax_csr(matrix):
+    """
+    Convert a csr_matrix to a dense PyTorch tensor, apply softmax, and then
+    convert it back to a csr_matrix.
+    """
+    # Convert the sparse matrix to a dense PyTorch tensor
+    dense_tensor = torch.tensor(matrix.toarray(), dtype=torch.float32)
+    
+    # Apply softmax across the appropriate dimension (e.g., columns)
+    softmax_tensor = torch.softmax(dense_tensor, dim=1)
+    
+    # Convert the softmax-applied tensor back to a numpy array
+    softmax_array = softmax_tensor.numpy()
+    
+    # Convert the numpy array back to a csr_matrix
+    softmax_csr_matrix = csr_matrix(softmax_array)
+    
+    return softmax_csr_matrix

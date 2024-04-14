@@ -325,3 +325,51 @@ class MultiBlockAttentionDiffusionRecommender(BaseRecommender, Incremental_Train
         shutil.rmtree(folder_path + file_name + "/", ignore_errors=True)
 
         self._print("Loading complete")
+
+
+
+class MultiBlockAttentionDiffusionRecommenderInf(MultiBlockAttentionDiffusionRecommender):
+
+    RECOMMENDER_NAME = "MultiBlockAttentionDiffusionRecommenderInf"
+
+    def _compute_item_score(self, user_id_array, items_to_compute = None):
+        n_batches = np.ceil(len(user_id_array) / self.batch_size).astype(int)
+        user_profile_inference_temp = []
+        for batch_num in range(n_batches):
+            # Calculate start and end indices for the current batch
+            start_idx = batch_num * self.batch_size
+            end_idx = min((batch_num + 1) * self.batch_size, len(user_id_array))
+
+            # Fetch the batch of user IDs
+            batch_user_ids = user_id_array[start_idx:end_idx]
+
+            # Convert CSR matrix to a dense numpy array for the current batch
+            user_batch_tensor = self.URM_train[batch_user_ids]
+            user_batch_dense_np = user_batch_tensor.toarray()
+
+            # Convert the dense numpy array to a PyTorch tensor and move it to the appropriate device
+            if str(self.device) == 'mps':
+                user_batch_tensor = torch.tensor(user_batch_dense_np, dtype=torch.float32, device='cpu').to('mps')
+            else:
+                # Transferring only the sparse structure to reduce the data transfer
+                user_batch_tensor = torch.sparse_csr_tensor(user_batch_tensor.indptr,
+                                                            user_batch_tensor.indices,
+                                                            user_batch_tensor.data,
+                                                            size=user_batch_tensor.shape,
+                                                            dtype=torch.float32,
+                                                            device=self.device,
+                                                            requires_grad=False).to_dense()
+
+            # Perform inference with the diffusion model for the current batch
+            user_profile_inference_temp.append(self.diffusion_model.inference(user_batch_tensor, self.inference_timesteps))
+
+        
+        user_profile_inference = np.vstack(user_profile_inference_temp)
+        
+        if items_to_compute is None:
+            item_scores = user_profile_inference
+        else:
+            item_scores = - np.ones((len(user_id_array), self.n_items), dtype=np.float32)*np.inf
+
+        return item_scores
+

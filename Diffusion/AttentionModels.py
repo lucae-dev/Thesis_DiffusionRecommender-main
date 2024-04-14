@@ -9,7 +9,7 @@ class SimpleAttentionDiffusionModel(nn.Module):
         self.encoder_model = encoder_model
         self.denoiser_model = denoiser_model
 
-    def forward(self, x_start_batch, t):
+    def forward(self, x_start_batch, t, similarity_matrix = None):
         """
 
         :param x_start:
@@ -25,7 +25,7 @@ class SimpleAttentionDiffusionModel(nn.Module):
         x_noisy = self._model.q_sample(x_start = x_emb_batch, t = t, gaussian_noise = gaussian_noise)
         #x_noisy = x_noisy + self.positional_encoding.get_encoding(t)
         
-        denoiser_prediction = self.denoiser_model.forward(x_noisy, None)
+        denoiser_prediction = self.denoiser_model.forward(x_noisy, similarity_matrix, None)
         denosier_loss = self.denoiser_model.loss()
 
         if self._model.objective == 'pred_noise':
@@ -41,10 +41,10 @@ class SimpleAttentionDiffusionModel(nn.Module):
 
         return loss_batch
     
-    def inference(self, user_profile_batch, inference_timesteps):
+    def inference(self, user_profile_batch, inference_timesteps, similarity_matrix = None):
         x_emb_batch = self.encoder_model.encode(user_profile_batch)
         
-        user_profile_inference_emb = self._model.sample_from_user_profile(x_emb_batch, inference_timesteps)
+        user_profile_inference_emb = self._model.sample_from_user_profile(x_emb_batch, inference_timesteps, similarity_matrix)
         
         user_profile_inference = self.encoder_model.decode(user_profile_inference_emb).cpu().detach().numpy()
         return user_profile_inference
