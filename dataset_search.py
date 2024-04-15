@@ -11,7 +11,7 @@ import optuna
 import numpy as np
 import pandas as pd
 import os
-from Diffusion.MultiBlockAttentionDiffusionRecommenderSimilarity import MultiBlockAttentionDiffusionRecommenderSimilarity
+from Diffusion.MultiBlockAttentionDiffusionRecommenderSimilarity import MultiBlockAttentionDiffusionRecommenderInfSimilarity, MultiBlockAttentionDiffusionRecommenderSimilarity
 import pandas as pd
 
 def _make_data_implicit(dataSplitter):
@@ -70,22 +70,24 @@ def objective(trial):
         os.makedirs(directory_path)
         print(f"Directory {directory_path} created.")
 
-    batch_size = trial.suggest_categorical('batch_size', [64, 128, 256, 512])
+    batch_size = trial.suggest_categorical('batch_size', [64, 128, 256, 512]) # , 1024]) # Movielens100k has only 943 users!!
     embeddings_dim = trial.suggest_categorical('embeddings_dim', [64, 128, 256, 512, 1024])
-    heads = trial.suggest_categorical('heads', [4, 8, 16])
-    attention_blocks = trial.suggest_categorical('attention_blocks', [1, 2, 3,])
+    heads = trial.suggest_categorical('heads', [1, 4, 8, 16])
+    attention_blocks = trial.suggest_categorical('attention_blocks', [1, 2, 3, 4])
     d_ff = trial.suggest_categorical('d_ff', [1024, 2048, 4096])
-    epochs = trial.suggest_int('epochs', 30, 400)
+    epochs = trial.suggest_int('epochs', 50, 750)
     l2_reg = trial.suggest_loguniform('l2_reg', 1e-5, 1e-3)
     learning_rate = trial.suggest_loguniform('learning_rate', 1e-4, 1e-2)
-    noise_timesteps = trial.suggest_int('noise_timesteps', 3, 60)
-    inference_timesteps = trial.suggest_int('inference_timesteps', 1, noise_timesteps-1)
+    noise_timesteps = trial.suggest_int('noise_timesteps', 3, 50)
+    inference_timesteps = trial.suggest_int('inference_timesteps', 2, noise_timesteps-1)
     start_beta = trial.suggest_float('start_beta', 0.00001, 0.001)
     end_beta = trial.suggest_float('end_beta', 0.01, 0.2)
+    similarity_weight = trial.suggest_float('similiraty_weight', 0.1, 2)
+
 
     # Initialize and train the recommender
 
-    diffusion_model = MultiBlockSimilarityAttentionDiffusionRecommender(URM_train = URM_train, verbose = False, use_gpu = True)
+    diffusion_model = MultiBlockAttentionDiffusionRecommenderInfSimilarity(URM_train = URM_train, verbose = False, use_gpu = True)
 
     diffusion_model.fit(
                       epochs=epochs,
@@ -99,7 +101,8 @@ def objective(trial):
                       noise_timesteps = noise_timesteps,
                       inference_timesteps = inference_timesteps,
                       start_beta = start_beta,
-                      end_beta = end_beta
+                      end_beta = end_beta,
+                      similarity_weight=similarity_weight
     )
 
     result_df, _ = evaluator_validation.evaluateRecommender(diffusion_model)
@@ -115,7 +118,8 @@ def objective(trial):
     'noise_timesteps': noise_timesteps,
     'inference_timesteps': inference_timesteps,
     'start_beta': start_beta,
-    'end_beta': end_beta}
+    'end_beta': end_beta, 
+    'similarity_weight': similarity_weight}
 
     result_df['hyperparams'] = str(hyperparams)
 
