@@ -34,7 +34,7 @@ def load_data(dataset_class, split_type, preprocessing, k_cores):
     if k_cores > 0:
         dataset_reader = DataPostprocessing_K_Cores(dataset_reader, k_cores_value = k_cores)
 
-    result_folder_path = "/Users/lucaortolomo/Desktop/TESI/Thesis_DiffusionRecommender-main/Hyperparameter_databases/hyperparameter_database_2024_02/{}/{}/hyperopt_{}/{}/".format("k_{}_cores".format(k_cores) if k_cores > 0 else "full",
+    result_folder_path = "./Thesis_DiffusionRecommender-main/Hyperparameter_databases/hyperparameter_database_2024_02/{}/{}/hyperopt_{}/{}/".format("k_{}_cores".format(k_cores) if k_cores > 0 else "full",
                                                            "original",
                                                            split_type,
                                                            dataset_reader._get_dataset_name())
@@ -54,7 +54,7 @@ def load_data(dataset_class, split_type, preprocessing, k_cores):
     if preprocessing == "implicit":
         _make_data_implicit(dataSplitter)
 
-    model_folder_path = "/Users/lucaortolomo/Desktop/TESI/Thesis_DiffusionRecommender-main/Hyperparameter_databases/hyperparameter_database_2024_02/{}/{}/hyperopt_{}/{}/models/".format("k_{}_cores".format(k_cores) if k_cores > 0 else "full",
+    model_folder_path = "./Thesis_DiffusionRecommender-main/Hyperparameter_databases/hyperparameter_database_2024_02/{}/{}/hyperopt_{}/{}/models/".format("k_{}_cores".format(k_cores) if k_cores > 0 else "full",
                                                                            preprocessing,
                                                                            split_type,
                                                                            dataset_reader._get_dataset_name())
@@ -64,7 +64,7 @@ def objective(trial):
 
     cutoff = 10
     metric = 'NDCG'
-    directory_path = '/Users/lucaortolomo/Desktop/TESI/Thesis_DiffusionRecommender-main/Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
+    directory_path = './Thesis_DiffusionRecommender-main/Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
 
     if not os.path.exists(directory_path):
         os.makedirs(directory_path)
@@ -147,7 +147,7 @@ if __name__ == '__main__':
     cutoff_to_optimize = 10
     cutoff_list = [5, 10, 20, 30, 40, 50, 100]
 
-    directory_path = '/Users/lucaortolomo/Desktop/TESI/Thesis_DiffusionRecommender-main/Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
+    directory_path = './Thesis_DiffusionRecommender-main/Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
 
     if not os.path.exists(directory_path):
         os.makedirs(directory_path)
@@ -181,7 +181,7 @@ if __name__ == '__main__':
     study.optimize(objective, n_trials=50, show_progress_bar=True)
 
 
-    directory_path = '/Users/lucaortolomo/Desktop/TESI/Thesis_DiffusionRecommender-main/Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
+    directory_path = './Thesis_DiffusionRecommender-main/Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
     filename = directory_path + '/' + recommender_instance.RECOMMENDER_NAME + ".csv"
 
     df =  pd.read_csv(filename)
