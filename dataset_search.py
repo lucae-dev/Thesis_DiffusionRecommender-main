@@ -12,6 +12,9 @@ import numpy as np
 import pandas as pd
 import os
 from Diffusion.MultiBlockAttentionDiffusionRecommenderSimilarity import MultiBlockAttentionDiffusionRecommenderInfSimilarity, MultiBlockAttentionDiffusionRecommenderSimilarity
+from Diffusion.MultiBlockAttentionDiffusionRecommender import MultiBlockAttentionDiffusionRecommenderInf
+from Diffusion.MultiBlockSimilarityAttentionDiffusionRecommender import MultiBlockSimilarityAttentionDiffusionRecommender
+from Diffusion.MultiBlockWSimilarityAttentionDiffusionRecommender import WSAD_Recommender
 import pandas as pd
 
 def _make_data_implicit(dataSplitter):
@@ -34,10 +37,10 @@ def load_data(dataset_class, split_type, preprocessing, k_cores):
     if k_cores > 0:
         dataset_reader = DataPostprocessing_K_Cores(dataset_reader, k_cores_value = k_cores)
 
-    result_folder_path = "./Thesis_DiffusionRecommender-main/Hyperparameter_databases/hyperparameter_database_2024_02/{}/{}/hyperopt_{}/{}/".format("k_{}_cores".format(k_cores) if k_cores > 0 else "full",
-                                                           "original",
-                                                           split_type,
-                                                           dataset_reader._get_dataset_name())
+    result_folder_path = "./Hyperparameter_databases/hyperparameter_database_2024_02/{}/{}/hyperopt_{}/{}/".format("k_{}_cores".format(k_cores) if k_cores > 0 else "full",
+                                                                                                                                                    "original",
+                                                                                                                                                    split_type,
+                                                                                                                                                    dataset_reader._get_dataset_name())
 
     if split_type == "random_holdout_80_10_10":
         dataSplitter = DataSplitter_Holdout(dataset_reader, user_wise=False, split_interaction_quota_list=[80, 10, 10], forbid_new_split=True)
@@ -54,17 +57,49 @@ def load_data(dataset_class, split_type, preprocessing, k_cores):
     if preprocessing == "implicit":
         _make_data_implicit(dataSplitter)
 
-    model_folder_path = "./Thesis_DiffusionRecommender-main/Hyperparameter_databases/hyperparameter_database_2024_02/{}/{}/hyperopt_{}/{}/models/".format("k_{}_cores".format(k_cores) if k_cores > 0 else "full",
+    model_folder_path = "./Hyperparameter_databases/hyperparameter_database_2024_02/{}/{}/hyperopt_{}/{}/models/".format("k_{}_cores".format(k_cores) if k_cores > 0 else "full",
                                                                            preprocessing,
                                                                            split_type,
                                                                            dataset_reader._get_dataset_name())
     return dataSplitter, model_folder_path
 
+
+
+import inspect
+
+def configure_fit_parameters(model, epochs, batch_size, embeddings_dim, heads, attention_blocks, d_ff, l2_reg, learning_rate, noise_timesteps, inference_timesteps, start_beta, end_beta, similarity_weight):
+    # Initialize the parameter dictionary with mandatory and always applicable parameters
+    params = {
+        'epochs': epochs,
+        'batch_size': batch_size,
+        'embeddings_dim': embeddings_dim,
+        'heads': heads,
+        'attention_blocks': attention_blocks,
+        'd_ff': d_ff,
+        'l2_reg': l2_reg,
+        'learning_rate': learning_rate,
+        'noise_timesteps': noise_timesteps,
+        'inference_timesteps': inference_timesteps,
+        'start_beta': start_beta,
+        'end_beta': end_beta
+    }
+    
+    # Check if 'similarity_weight' is a valid parameter for the model's fit method
+    if 'similarity_weight' in inspect.signature(model.fit).parameters:
+        params['similarity_weight'] = similarity_weight
+
+    return params
+
+
+
+
 def objective(trial):
 
     cutoff = 10
     metric = 'NDCG'
-    directory_path = './Thesis_DiffusionRecommender-main/Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
+    directory_path = './Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
+
+    model = get_model()
 
     if not os.path.exists(directory_path):
         os.makedirs(directory_path)
@@ -75,7 +110,7 @@ def objective(trial):
     heads = trial.suggest_categorical('heads', [1, 4, 8, 16])
     attention_blocks = trial.suggest_categorical('attention_blocks', [1, 2, 3, 4])
     d_ff = trial.suggest_categorical('d_ff', [1024, 2048, 4096])
-    epochs = trial.suggest_int('epochs', 50, 750)
+    epochs = trial.suggest_int('epochs', 1, 2)
     l2_reg = trial.suggest_loguniform('l2_reg', 1e-5, 1e-3)
     learning_rate = trial.suggest_loguniform('learning_rate', 1e-4, 1e-2)
     noise_timesteps = trial.suggest_int('noise_timesteps', 3, 50)
@@ -87,9 +122,10 @@ def objective(trial):
 
     # Initialize and train the recommender
 
-    diffusion_model = MultiBlockAttentionDiffusionRecommenderInfSimilarity(URM_train = URM_train, verbose = False, use_gpu = True)
+    diffusion_model = model(URM_train = URM_train, verbose = False, use_gpu = True)
 
-    diffusion_model.fit(
+    fit_param = configure_fit_parameters(
+                      model = diffusion_model,
                       epochs=epochs,
                       batch_size=batch_size,
                       embeddings_dim=embeddings_dim,
@@ -104,6 +140,8 @@ def objective(trial):
                       end_beta = end_beta,
                       similarity_weight=similarity_weight
     )
+
+    diffusion_model.fit(**fit_param)
 
     result_df, _ = evaluator_validation.evaluateRecommender(diffusion_model)
     hyperparams = {
@@ -136,9 +174,27 @@ def objective(trial):
     return result_df.loc[cutoff][metric]
 
 
-
+def get_model():
+    model_type = os.getenv("MODEL_TYPE")  # Set this environment variable when running the script
+    
+    if model_type == "InfSimilarity":
+        model = MultiBlockAttentionDiffusionRecommenderInfSimilarity
+    elif model_type == "Similarity":
+        model = MultiBlockAttentionDiffusionRecommenderSimilarity
+    elif model_type == "Inf":
+        model = MultiBlockAttentionDiffusionRecommenderInf
+    elif model_type == "MBSimilarity":
+        model = MultiBlockSimilarityAttentionDiffusionRecommender
+    elif model_type == "MBSimilarity":
+        model = WSAD_Recommender
+    else:
+        raise ValueError("Unsupported model type specified.")
+    
+    return model
 
 if __name__ == '__main__':
+
+    model = get_model()
 
     k_cores = 0
     split_type = "random_holdout_80_10_10"
@@ -147,7 +203,7 @@ if __name__ == '__main__':
     cutoff_to_optimize = 10
     cutoff_list = [5, 10, 20, 30, 40, 50, 100]
 
-    directory_path = './Thesis_DiffusionRecommender-main/Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
+    directory_path = './Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
 
     if not os.path.exists(directory_path):
         os.makedirs(directory_path)
@@ -173,15 +229,15 @@ if __name__ == '__main__':
 
 
     # Load optimal hyperparams
-    recommender_instance = MultiBlockSimilarityAttentionDiffusionRecommender(URM_train_last_test)
+    recommender_instance = model(URM_train_last_test)
     #search_metadata = {'batch_size': 256, 'embeddings_dim': 512, 'heads': 1, 'attention_blocks': 3, 'd_ff': 4096, 'epochs': 336, 'l2_reg': 0.0007440687899631993, 'learning_rate': 0.00036441971846935237, 'noise_timesteps': 81, 'inference_timesteps': 6, 'start_beta': 0.0006551779118897007, 'end_beta': 0.01539082762973255}# dataIO.load_data(P3alphaRecommender.RECOMMENDER_NAME + "_metadata")
     #optimal_hyperparams = search_metadata# search_metadata["hyperparameters_best"]
     
     study = optuna.create_study(direction="maximize")
-    study.optimize(objective, n_trials=50, show_progress_bar=True)
+    study.optimize(objective, n_trials=1, show_progress_bar=True)
 
 
-    directory_path = './Thesis_DiffusionRecommender-main/Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
+    directory_path = './Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
     filename = directory_path + '/' + recommender_instance.RECOMMENDER_NAME + ".csv"
 
     df =  pd.read_csv(filename)
