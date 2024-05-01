@@ -15,7 +15,10 @@ from Diffusion.MultiBlockAttentionDiffusionRecommenderSimilarity import MultiBlo
 from Diffusion.MultiBlockAttentionDiffusionRecommender import MultiBlockAttentionDiffusionRecommenderInf
 from Diffusion.MultiBlockSimilarityAttentionDiffusionRecommender import MultiBlockSimilarityAttentionDiffusionRecommender
 from Diffusion.MultiBlockWSimilarityAttentionDiffusionRecommender import WSAD_Recommender
-import pandas as pd
+import psycopg2
+from psycopg2 import sql
+
+
 
 def _make_data_implicit(dataSplitter):
 
@@ -65,8 +68,6 @@ def load_data(dataset_class, split_type, preprocessing, k_cores):
 
 
 
-import inspect
-
 def configure_fit_parameters(model, epochs, batch_size, embeddings_dim, heads, attention_blocks, d_ff, l2_reg, learning_rate, noise_timesteps, inference_timesteps, start_beta, end_beta, similarity_weight):
     # Initialize the parameter dictionary with mandatory and always applicable parameters
     params = {
@@ -83,9 +84,8 @@ def configure_fit_parameters(model, epochs, batch_size, embeddings_dim, heads, a
         'start_beta': start_beta,
         'end_beta': end_beta
     }
-    
-    # Check if 'similarity_weight' is a valid parameter for the model's fit method
-    if 'similarity_weight' in inspect.signature(model.fit).parameters:
+    model = get_model()
+    if model == MultiBlockSimilarityAttentionDiffusionRecommender or model == WSAD_Recommender:
         params['similarity_weight'] = similarity_weight
 
     return params
@@ -156,8 +156,10 @@ def objective(trial):
     'noise_timesteps': noise_timesteps,
     'inference_timesteps': inference_timesteps,
     'start_beta': start_beta,
-    'end_beta': end_beta, 
-    'similarity_weight': similarity_weight}
+    'end_beta': end_beta}
+
+    if model == MultiBlockSimilarityAttentionDiffusionRecommender or model == WSAD_Recommender:
+        hyperparams['similarity_weight'] = similarity_weight
 
     result_df['hyperparams'] = str(hyperparams)
 
@@ -175,7 +177,7 @@ def objective(trial):
 
 
 def get_model():
-    model_type = os.getenv("MODEL_TYPE")  # Set this environment variable when running the script
+    model_type = os.getenv("MODEL_TYPE")  
     
     if model_type == "InfSimilarity":
         model = MultiBlockAttentionDiffusionRecommenderInfSimilarity
@@ -192,6 +194,57 @@ def get_model():
     
     return model
 
+def get_dataset():
+    dataset_class = os.getenv("DATASET") 
+    
+    if dataset_class == "Movielens1M":
+        dataset_reader = Movielens1MReader
+    elif dataset_class == "FilmTrust":
+        dataset_reader = FilmTrustReader
+    elif dataset_class == "Frappe":
+        dataset_reader = FrappeReader
+    elif dataset_class == "LastFMHetrec2011":
+        dataset_reader = LastFMHetrec2011Reader
+
+    else:
+        raise ValueError("Unsupported dataset specified.")
+    
+    return dataset_reader
+
+def get_connection():
+    db_url = "postgresql://postgres:TGBCFSFxiLVUyNZInoIAfClDtkrTwZau@monorail.proxy.rlwy.net:18855/railway"
+    
+    conn = psycopg2.connect(db_url)
+    cursor = conn.cursor()
+    return conn, cursor
+
+def close_connection(conn, cursor):
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+def save_to_db(df, table_name):
+    conn, cursor = get_connection()
+    
+    column_str = ', '.join([f"{col} TEXT" if df[col].dtype == 'object' else f"{col} REAL" for col in df.columns])
+    create_table_query = f"CREATE TABLE IF NOT EXISTS {table_name} (id SERIAL PRIMARY KEY, {column_str})"
+    cursor.execute(create_table_query)
+
+    columns = ', '.join(df.columns)
+    placeholders = ', '.join(['%s'] * len(df.columns))
+    sql = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
+
+    # Convert DataFrame to list of tuples
+    data_tuples = list(df.itertuples(index=False, name=None))
+
+    # Execute the command
+    cursor.executemany(sql, data_tuples)
+
+    close_connection(conn, cursor)
+
+def should_save_on_remote_db():
+    return os.getenv("SAVE", "False").lower() == "true"
+
 if __name__ == '__main__':
 
     model = get_model()
@@ -199,9 +252,9 @@ if __name__ == '__main__':
     k_cores = 0
     split_type = "random_holdout_80_10_10"
     preprocessing = "implicit"
-    dataset_class = Movielens1MReader
+    dataset_class = get_dataset()
     cutoff_to_optimize = 10
-    cutoff_list = [5, 10, 20, 30, 40, 50, 100]
+    cutoff_list = [10]
 
     directory_path = './Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
 
@@ -248,6 +301,16 @@ if __name__ == '__main__':
     recommender_instance.fit(**optimal_hyperparams)
     result_df, result_str = evaluator_test.evaluateRecommender(recommender_instance)
     print(result_str)
+
+    result_df['hyperparams'] = optimal_hyperparams_str
+
+    experiment_table_name = recommender_instance.RECOMMENDER_NAME + '_' + dataset_class()._get_dataset_name() + 'experiment'
+    result_table_name = dataset_class()._get_dataset_name() + 'best_result'
+
+    if should_save_on_remote_db():
+        save_to_db(df, experiment_table_name)
+        save_to_db(result_df, result_table_name)
+        
     print("fine esperimento!")
 
 
