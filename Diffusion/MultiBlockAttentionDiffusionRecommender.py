@@ -155,7 +155,7 @@ class MultiBlockAttentionDiffusionRecommender(BaseRecommender, Incremental_Train
 
         self._update_best_model()
 
-        with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA, ProfilerActivity.], profile_memory=True, record_shapes=True) as prof:
+        with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], profile_memory=True, record_shapes=True) as prof:
             #self.loss_list = []
 
             self._train_with_early_stopping(epochs,
