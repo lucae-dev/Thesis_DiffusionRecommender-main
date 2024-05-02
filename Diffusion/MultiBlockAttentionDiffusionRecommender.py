@@ -155,15 +155,15 @@ class MultiBlockAttentionDiffusionRecommender(BaseRecommender, Incremental_Train
 
         self._update_best_model()
 
-        with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], profile_memory=True, record_shapes=True) as prof:
+        # with profile(activities=[ProfilerActivity.CPU, ProfilerActivity.CUDA], profile_memory=True, record_shapes=True) as prof:
             #self.loss_list = []
 
-            self._train_with_early_stopping(epochs,
+        self._train_with_early_stopping(epochs,
                                             algorithm_name = self.RECOMMENDER_NAME,
                                             **earlystopping_kwargs)
 
-        print(prof.key_averages().table(sort_by="self_cpu_time_total", row_limit=30))
-        prof.export_chrome_trace("trace.json")
+        # print(prof.key_averages().table(sort_by="self_cpu_time_total", row_limit=30))
+        # prof.export_chrome_trace("trace.json")
 
         self._print("Training complete")
 
