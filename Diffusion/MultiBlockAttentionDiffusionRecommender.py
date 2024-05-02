@@ -215,7 +215,7 @@ class MultiBlockAttentionDiffusionRecommender(BaseRecommender, Incremental_Train
             # Convert the dense numpy array to a PyTorch tensor
             # and move it to the appropriate device
             if str(self.device) == 'mps':
-                user_batch_tensor = torch.tensor(user_batch_dense_np, dtype=torch.float32, device='cpu').to('mps')
+                user_batch_tensor = torch.tensor(user_batch_dense_np, dtype=torch.float32, device='mps')
             else:
             # Transferring only the sparse structure to reduce the data transfer
                 user_batch_tensor = torch.sparse_csr_tensor(user_batch_tensor.indptr,
@@ -333,7 +333,7 @@ class MultiBlockAttentionDiffusionRecommender(BaseRecommender, Incremental_Train
 
 class MultiBlockAttentionDiffusionRecommenderInf(MultiBlockAttentionDiffusionRecommender):
 
-    RECOMMENDER_NAME = "MultiBlockAttentionDiffusionRecommenderInf"
+    RECOMMENDER_NAME = "ADPR"
 
     def _compute_item_score(self, user_id_array, items_to_compute = None):
         n_batches = np.ceil(len(user_id_array) / self.batch_size).astype(int)
