@@ -287,7 +287,7 @@ if __name__ == '__main__':
     #optimal_hyperparams = search_metadata# search_metadata["hyperparameters_best"]
     
     study = optuna.create_study(direction="maximize")
-    study.optimize(objective, n_trials=1, show_progress_bar=True)
+    study.optimize(objective, n_trials=50, show_progress_bar=True)
 
 
     directory_path = './Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
