@@ -108,9 +108,9 @@ def objective(trial):
     batch_size = trial.suggest_categorical('batch_size', [64, 128, 256, 512]) # , 1024]) # Movielens100k has only 943 users!!
     embeddings_dim = trial.suggest_categorical('embeddings_dim', [64, 128, 256, 512, 1024])
     heads = trial.suggest_categorical('heads', [1, 4, 8, 16])
-    attention_blocks = trial.suggest_categorical('attention_blocks', [1, 2, 3, 4])
+    attention_blocks = trial.suggest_categorical('attention_blocks', [1])
     d_ff = trial.suggest_categorical('d_ff', [1024, 2048, 4096])
-    epochs = trial.suggest_int('epochs', 1, 2)
+    epochs = trial.suggest_int('epochs', 20, 500)
     l2_reg = trial.suggest_loguniform('l2_reg', 1e-5, 1e-3)
     learning_rate = trial.suggest_loguniform('learning_rate', 1e-4, 1e-2)
     noise_timesteps = trial.suggest_int('noise_timesteps', 3, 50)
@@ -183,7 +183,7 @@ def get_model():
         model = MultiBlockAttentionDiffusionRecommenderInfSimilarity
     elif model_type == "Similarity":
         model = MultiBlockAttentionDiffusionRecommenderSimilarity
-    elif model_type == "Inf":
+    elif model_type == "ADPR":
         model = MultiBlockAttentionDiffusionRecommenderInf
     elif model_type == "MBSimilarity":
         model = MultiBlockSimilarityAttentionDiffusionRecommender
