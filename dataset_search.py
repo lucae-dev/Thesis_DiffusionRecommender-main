@@ -185,9 +185,9 @@ def get_model():
         model = MultiBlockAttentionDiffusionRecommenderSimilarity
     elif model_type == "ADPR":
         model = MultiBlockAttentionDiffusionRecommenderInf
-    elif model_type == "MBSimilarity":
+    elif model_type == "SAD":
         model = MultiBlockSimilarityAttentionDiffusionRecommender
-    elif model_type == "MBSimilarity":
+    elif model_type == "WSAD":
         model = WSAD_Recommender
     else:
         raise ValueError("Unsupported model type specified.")
@@ -305,7 +305,9 @@ if __name__ == '__main__':
     result_df['hyperparams'] = optimal_hyperparams_str
     result_df['model'] = recommender_instance.RECOMMENDER_NAME
 
-    experiment_table_name = recommender_instance.RECOMMENDER_NAME + '_' + dataset_class()._get_dataset_name() + 'experiment'
+    recommender_instance_name = "Multi-Block" + recommender_instance.RECOMMENDER_NAME 
+
+    experiment_table_name = recommender_instance_name + '_' + dataset_class()._get_dataset_name() + 'experiment'
     result_table_name = dataset_class()._get_dataset_name() + 'best_result'
 
     if should_save_on_remote_db():
