@@ -27,7 +27,7 @@ class WSAD_Recommender(MultiBlockAttentionDiffusionRecommenderSimilarity):
         noise_schedule = LinearNoiseSchedule(start_beta = self.start_beta, end_beta = self.end_beta,
                                             device=self.device, noise_timesteps = self.noise_timesteps)
 
-        denoiser_model = MultiBlockEncoder(d_model = self.embeddings_dim, d_ff = self.d_ff, h = self.heads, device = self.device, dropout=self.dropout_p, n_blocks = self.attention_blocks, seq_len = self.batch_size, similarity_weight=self.simi).to(self.device)
+        denoiser_model = MultiBlockEncoder(d_model = self.embeddings_dim, d_ff = self.d_ff, h = self.heads, device = self.device, dropout=self.dropout_p, n_blocks = self.attention_blocks, seq_len = self.batch_size, similarity_weight=self.similarity_weight).to(self.device)
 
         gaussian_model = _GaussianDiffusionModel(denoiser_model,
                                             noise_schedule,
@@ -63,11 +63,6 @@ class WSAD_Recommender(MultiBlockAttentionDiffusionRecommenderSimilarity):
             # build sub similarity matrix between user_batch users only
             similarity_matrix = self.sampler.similarity_matrix[user_batch][:, user_batch]
 
-            if (str(self.device) == 'mps'):
-                sparse_device = 'cpu'
-            else:
-                sparse_device = self.device
-
             user_batch_tensor = self.URM_train[user_batch]
             # Convert CSR matrix to a dense numpy array directly
             user_batch_dense_np = user_batch_tensor.toarray()
@@ -75,7 +70,7 @@ class WSAD_Recommender(MultiBlockAttentionDiffusionRecommenderSimilarity):
             # Convert the dense numpy array to a PyTorch tensor
             # and move it to the appropriate device
             if str(self.device) == 'mps':
-                user_batch_tensor = torch.tensor(user_batch_dense_np, dtype=torch.float32, device='cpu').to('mps')
+                user_batch_tensor = torch.tensor(user_batch_dense_np, dtype=torch.float32, device='mps')
             else:
             # Transferring only the sparse structure to reduce the data transfer
                 user_batch_tensor = torch.sparse_csr_tensor(user_batch_tensor.indptr,

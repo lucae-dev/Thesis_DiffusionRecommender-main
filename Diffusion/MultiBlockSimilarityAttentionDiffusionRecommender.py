@@ -15,7 +15,7 @@ from Diffusion.similarity_models import TwoRandomWalksSampler
 # SAD - R
 
 
-class MultiBlockSimilarityAttentionDiffusionRecommender(MultiBlockAttentionDiffusionRecommenderSimilarity):
+class SAD(MultiBlockAttentionDiffusionRecommenderSimilarity):
     RECOMMENDER_NAME = "SAD"
 
     def _run_epoch(self, num_epoch):
@@ -35,11 +35,6 @@ class MultiBlockSimilarityAttentionDiffusionRecommender(MultiBlockAttentionDiffu
             # build sub similarity matrix between user_batch users only
             similarity_matrix = self.sampler.similarity_matrix[user_batch][:, user_batch]
 
-            if (str(self.device) == 'mps'):
-                sparse_device = 'cpu'
-            else:
-                sparse_device = self.device
-
             user_batch_tensor = self.URM_train[user_batch]
             # Convert CSR matrix to a dense numpy array directly
             user_batch_dense_np = user_batch_tensor.toarray()
@@ -47,7 +42,7 @@ class MultiBlockSimilarityAttentionDiffusionRecommender(MultiBlockAttentionDiffu
             # Convert the dense numpy array to a PyTorch tensor
             # and move it to the appropriate device
             if str(self.device) == 'mps':
-                user_batch_tensor = torch.tensor(user_batch_dense_np, dtype=torch.float32, device='cpu').to('mps')
+                user_batch_tensor = torch.tensor(user_batch_dense_np, dtype=torch.float32, device='mps')
             else:
             # Transferring only the sparse structure to reduce the data transfer
                 user_batch_tensor = torch.sparse_csr_tensor(user_batch_tensor.indptr,

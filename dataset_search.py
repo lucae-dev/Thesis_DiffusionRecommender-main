@@ -5,7 +5,7 @@ from Data_manager.data_consistency_check import assert_disjoint_matrices, assert
 from Evaluation.Evaluator import EvaluatorHoldout
 from Data_manager import *
 from Data_manager.Movielens.Movielens1MReader import Movielens1MReader
-from Diffusion.MultiBlockSimilarityAttentionDiffusionRecommender import MultiBlockSimilarityAttentionDiffusionRecommender
+from Diffusion.MultiBlockSimilarityAttentionDiffusionRecommender import SAD
 from Recommenders.DataIO import DataIO
 import optuna
 import numpy as np
@@ -13,7 +13,7 @@ import pandas as pd
 import os
 from Diffusion.MultiBlockAttentionDiffusionRecommenderSimilarity import MultiBlockAttentionDiffusionRecommenderInfSimilarity, MultiBlockAttentionDiffusionRecommenderSimilarity
 from Diffusion.MultiBlockAttentionDiffusionRecommender import MultiBlockAttentionDiffusionRecommenderInf
-from Diffusion.MultiBlockSimilarityAttentionDiffusionRecommender import MultiBlockSimilarityAttentionDiffusionRecommender
+from Diffusion.MultiBlockSimilarityAttentionDiffusionRecommender import SAD
 from Diffusion.MultiBlockWSimilarityAttentionDiffusionRecommender import WSAD_Recommender
 import psycopg2
 from psycopg2 import sql
@@ -85,7 +85,7 @@ def configure_fit_parameters(model, epochs, batch_size, embeddings_dim, heads, a
         'end_beta': end_beta
     }
     model = get_model()
-    if model == MultiBlockSimilarityAttentionDiffusionRecommender or model == WSAD_Recommender:
+    if model == SAD or model == WSAD_Recommender:
         params['similarity_weight'] = similarity_weight
 
     return params
@@ -158,7 +158,7 @@ def objective(trial):
     'start_beta': start_beta,
     'end_beta': end_beta}
 
-    if model == MultiBlockSimilarityAttentionDiffusionRecommender or model == WSAD_Recommender:
+    if model == SAD or model == WSAD_Recommender:
         hyperparams['similarity_weight'] = similarity_weight
 
     result_df['hyperparams'] = str(hyperparams)
@@ -186,7 +186,7 @@ def get_model():
     elif model_type == "ADPR":
         model = MultiBlockAttentionDiffusionRecommenderInf
     elif model_type == "SAD":
-        model = MultiBlockSimilarityAttentionDiffusionRecommender
+        model = SAD
     elif model_type == "WSAD":
         model = WSAD_Recommender
     else:

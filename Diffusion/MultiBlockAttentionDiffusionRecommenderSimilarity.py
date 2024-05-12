@@ -347,7 +347,7 @@ class MultiBlockAttentionDiffusionRecommenderInfSimilarity(MultiBlockAttentionDi
         self.diffusion_model.train()
 
         #batches must become number of batches, the batch size will another parameter -> add parameter n_batches
-        num_batches_per_epoch = math.ceil(len(self.warm_user_ids) / self.batch_size)
+        # num_batches_per_epoch = math.ceil(len(self.warm_user_ids) / self.batch_size)
 
         len_warm_ids = len(self.warm_user_ids)
 
@@ -355,18 +355,17 @@ class MultiBlockAttentionDiffusionRecommenderInfSimilarity(MultiBlockAttentionDi
         iterator = tqdm(range(len_warm_ids)) if self.show_progress_bar else range(len_warm_ids)
         i = 0
         for _ in iterator:
-
             #user_batch = torch.LongTensor(np.random.choice(self.warm_user_ids, size=self.batch_size))
             user_batch = self.sampler.sample_batch(self.batch_size, self.warm_user_ids[i])
             i=i+1
             user_batch_tensor = self.URM_train[user_batch]
-            # Convert CSR matrix to a dense numpy array directly
-            user_batch_dense_np = user_batch_tensor.toarray()
 
-            # Convert the dense numpy array to a PyTorch tensor
-            # and move it to the appropriate device
+
+            # Convert the dense numpy array to a PyTorch tensor directly on the appropriate device
             if str(self.device) == 'mps':
-                user_batch_tensor = torch.tensor(user_batch_dense_np, dtype=torch.float32, device='cpu').to('mps')
+                # Convert CSR matrix to a dense numpy array directly
+                user_batch_dense_np = user_batch_tensor.toarray()
+                user_batch_tensor = torch.tensor(user_batch_dense_np, dtype=torch.float32, device='mps')
             else:
             # Transferring only the sparse structure to reduce the data transfer
                 user_batch_tensor = torch.sparse_csr_tensor(user_batch_tensor.indptr,
@@ -422,13 +421,13 @@ class MultiBlockAttentionDiffusionRecommenderInfSimilarity(MultiBlockAttentionDi
             
             # Convert directly on the appropriate device if possible to avoid data transfer overhead
             if str(self.device) == 'mps':
-                user_batch_tensor = torch.tensor(user_batch_tensor, dtype=torch.float32, device='cpu').to('mps')
+                user_batch_tensor = torch.tensor(user_batch_tensor, dtype=torch.float32, device='mps')
             else:
                 user_batch_tensor = torch.tensor(user_batch_tensor, dtype=torch.float32, device=self.device)
             
             # Perform inference and store the result directly in the preallocated tensor
             user_profile_inference_temp.append(self.diffusion_model.inference(user_batch_tensor, self.inference_timesteps)[0])
-            user_profile_inference_temp_arr = np.array(user_profile_inference_temp)
+            # user_profile_inference_temp_arr = np.array(user_profile_inference_temp)
             print("inference" + str(i) + "/" + str(num_users))
             #print(type(user_profile_inference_temp_arr))
             #print(user_profile_inference_temp_arr.shape)
