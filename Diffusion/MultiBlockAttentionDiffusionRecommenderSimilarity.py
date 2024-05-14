@@ -339,7 +339,7 @@ class MultiBlockAttentionDiffusionRecommenderSimilarity(BaseRecommender, Increme
 
 
 class MultiBlockAttentionDiffusionRecommenderInfSimilarity(MultiBlockAttentionDiffusionRecommenderSimilarity):
-    RECOMMENDER_NAME = "MultiBlockAttentionDiffusionRecommenderSimilarityINF"
+    RECOMMENDER_NAME = "S-SAD"
 
     def _run_epoch(self, num_epoch):
 
