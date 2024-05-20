@@ -138,7 +138,8 @@ def objective(trial):
                       inference_timesteps = inference_timesteps,
                       start_beta = start_beta,
                       end_beta = end_beta,
-                      similarity_weight=similarity_weight
+                      similarity_weight=similarity_weight,
+                      objective="pred_x0"
     )
 
     diffusion_model.fit(**fit_param)

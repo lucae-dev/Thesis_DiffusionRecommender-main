@@ -333,7 +333,7 @@ class MultiBlockAttentionDiffusionRecommender(BaseRecommender, Incremental_Train
 
 class MultiBlockAttentionDiffusionRecommenderInf(MultiBlockAttentionDiffusionRecommender):
 
-    RECOMMENDER_NAME = "ADPR"
+    RECOMMENDER_NAME = "ADPR-noise"
 
     def _compute_item_score(self, user_id_array, items_to_compute = None):
         n_batches = np.ceil(len(user_id_array) / self.batch_size).astype(int)
