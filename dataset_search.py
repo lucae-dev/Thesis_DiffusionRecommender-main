@@ -68,7 +68,7 @@ def load_data(dataset_class, split_type, preprocessing, k_cores):
 
 
 
-def configure_fit_parameters(model, epochs, batch_size, embeddings_dim, heads, attention_blocks, d_ff, l2_reg, learning_rate, noise_timesteps, inference_timesteps, start_beta, end_beta, similarity_weight):
+def configure_fit_parameters(model, epochs, batch_size, embeddings_dim, heads, attention_blocks, d_ff, l2_reg, learning_rate, noise_timesteps, inference_timesteps, start_beta, end_beta, similarity_weight, objective):
     # Initialize the parameter dictionary with mandatory and always applicable parameters
     params = {
         'epochs': epochs,
@@ -82,7 +82,8 @@ def configure_fit_parameters(model, epochs, batch_size, embeddings_dim, heads, a
         'noise_timesteps': noise_timesteps,
         'inference_timesteps': inference_timesteps,
         'start_beta': start_beta,
-        'end_beta': end_beta
+        'end_beta': end_beta,
+        'objective': objective
     }
     model = get_model()
     if model == SAD or model == WSAD_Recommender:
