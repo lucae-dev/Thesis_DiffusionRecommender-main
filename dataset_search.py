@@ -111,7 +111,7 @@ def objective(trial):
     heads = trial.suggest_categorical('heads', [1, 4, 8, 16])
     attention_blocks = trial.suggest_categorical('attention_blocks', [1])
     d_ff = trial.suggest_categorical('d_ff', [1024, 2048, 4096])
-    epochs = trial.suggest_int('epochs', 20, 500)
+    epochs = trial.suggest_int('epochs', 2, 350)
     l2_reg = trial.suggest_loguniform('l2_reg', 1e-5, 1e-3)
     learning_rate = trial.suggest_loguniform('learning_rate', 1e-4, 1e-2)
     noise_timesteps = trial.suggest_int('noise_timesteps', 3, 80)
@@ -184,7 +184,7 @@ def get_model():
     
     if model_type == "S-SAD":
         model = MultiBlockAttentionDiffusionRecommenderInfSimilarity
-    elif model_type == "Similarity":
+    elif model_type == "DO NOT USE":
         model = MultiBlockAttentionDiffusionRecommenderSimilarity
     elif model_type == "ADPR":
         model = MultiBlockAttentionDiffusionRecommenderInf
@@ -289,10 +289,24 @@ if __name__ == '__main__':
     #search_metadata = {'batch_size': 256, 'embeddings_dim': 512, 'heads': 1, 'attention_blocks': 3, 'd_ff': 4096, 'epochs': 336, 'l2_reg': 0.0007440687899631993, 'learning_rate': 0.00036441971846935237, 'noise_timesteps': 81, 'inference_timesteps': 6, 'start_beta': 0.0006551779118897007, 'end_beta': 0.01539082762973255}# dataIO.load_data(P3alphaRecommender.RECOMMENDER_NAME + "_metadata")
     #optimal_hyperparams = search_metadata# search_metadata["hyperparameters_best"]
     
-    study = optuna.create_study(direction="maximize")
-    study.optimize(objective, n_trials=50, show_progress_bar=True)
+    postgres_url = "postgresql://postgres:TGBCFSFxiLVUyNZInoIAfClDtkrTwZau@monorail.proxy.rlwy.net:18855/railway"
+    study = optuna.create_study(study_name= (model.RECOMMENDER_NAME + '_' + dataset_class()._get_dataset_name()), storage=postgres_url, load_if_exists=True, direction="maximize")
+    completed_trials = len([trial for trial in study.trials if trial.state == optuna.trial.TrialState.COMPLETE])
 
 
+    print(f"Number of completed trials: {completed_trials}")
+
+    # Calculate the number of remaining trials
+    remaining_trials = 50 - completed_trials
+
+    if remaining_trials > 0:
+        # Continue optimizing with the remaining number of trials
+        print(f"Running {remaining_trials} more trials...")
+        study.optimize(objective, n_trials=remaining_trials, show_progress_bar=True)
+    else:
+        print("No more trials needed. The study has already completed the desired number of trials.")
+
+    
     directory_path = './Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
     filename = directory_path + '/' + recommender_instance.RECOMMENDER_NAME + "_x0" + ".csv"
 
