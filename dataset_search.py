@@ -115,7 +115,7 @@ def objective(trial):
     l2_reg = trial.suggest_loguniform('l2_reg', 1e-5, 1e-3)
     learning_rate = trial.suggest_loguniform('learning_rate', 1e-4, 1e-2)
     noise_timesteps = trial.suggest_int('noise_timesteps', 3, 80)
-    inference_timesteps = trial.suggest_int('inference_timesteps', 2, noise_timesteps-1)
+    inference_timesteps = trial.suggest_int('inference_timesteps', 2, min(10, noise_timesteps-1))
     start_beta = trial.suggest_float('start_beta', 0.00001, 0.001)
     end_beta = trial.suggest_float('end_beta', 0.01, 0.2)
     similarity_weight = trial.suggest_float('similiraty_weight', 0.1, 2)
