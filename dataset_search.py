@@ -158,14 +158,15 @@ def objective(trial):
     'noise_timesteps': noise_timesteps,
     'inference_timesteps': inference_timesteps,
     'start_beta': start_beta,
-    'end_beta': end_beta}
+    'end_beta': end_beta, 
+    'objective': 'pred_x0'}
 
     if model == SAD or model == WSAD_Recommender:
         hyperparams['similarity_weight'] = similarity_weight
 
     result_df['hyperparams'] = str(hyperparams)
 
-    filename = directory_path + '/' + diffusion_model.RECOMMENDER_NAME + ".csv"
+    filename = directory_path + '/' + diffusion_model.RECOMMENDER_NAME + "_x0" + ".csv"
     print(str(filename))
     # Check if file exists
     if os.path.isfile(filename):
@@ -293,7 +294,7 @@ if __name__ == '__main__':
 
 
     directory_path = './Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
-    filename = directory_path + '/' + recommender_instance.RECOMMENDER_NAME + ".csv"
+    filename = directory_path + '/' + recommender_instance.RECOMMENDER_NAME + "_x0" + ".csv"
 
     df =  pd.read_csv(filename)
     optimal_hyperparams_str = df.loc[df['NDCG'].idxmax(), 'hyperparams']
@@ -305,9 +306,9 @@ if __name__ == '__main__':
     print(result_str)
 
     result_df['hyperparams'] = optimal_hyperparams_str
-    result_df['model'] = recommender_instance.RECOMMENDER_NAME
+    result_df['model'] = recommender_instance.RECOMMENDER_NAME + "_x0"
 
-    recommender_instance_name = recommender_instance.RECOMMENDER_NAME 
+    recommender_instance_name = recommender_instance.RECOMMENDER_NAME + "_x0"
 
     experiment_table_name = recommender_instance_name + '_' + dataset_class()._get_dataset_name() + 'experiment'
     result_table_name = dataset_class()._get_dataset_name() + 'best_result'

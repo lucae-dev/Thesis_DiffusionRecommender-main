@@ -126,7 +126,7 @@ class MultiBlockAttentionDiffusionRecommender(BaseRecommender, Incremental_Train
             use_batch_norm = False,
             use_dropout = False,
             dropout_p = 0.3,
-            objective = "pred_noise",
+            objective = "pred_x0",
             **earlystopping_kwargs):
 
 
@@ -202,12 +202,7 @@ class MultiBlockAttentionDiffusionRecommender(BaseRecommender, Incremental_Train
         for _ in iterator:
 
             user_batch = torch.LongTensor(np.random.choice(self.warm_user_ids, size=self.batch_size))
-
-            if (str(self.device) == 'mps'):
-                sparse_device = 'cpu'
-            else:
-                sparse_device = self.device
-
+            
             user_batch_tensor = self.URM_train[user_batch]
             # Convert CSR matrix to a dense numpy array directly
             user_batch_dense_np = user_batch_tensor.toarray()
@@ -333,7 +328,7 @@ class MultiBlockAttentionDiffusionRecommender(BaseRecommender, Incremental_Train
 
 class MultiBlockAttentionDiffusionRecommenderInf(MultiBlockAttentionDiffusionRecommender):
 
-    RECOMMENDER_NAME = "ADPR-noise"
+    RECOMMENDER_NAME = "ADPR"
 
     def _compute_item_score(self, user_id_array, items_to_compute = None):
         n_batches = np.ceil(len(user_id_array) / self.batch_size).astype(int)
