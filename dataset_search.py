@@ -15,6 +15,8 @@ from Diffusion.MultiBlockAttentionDiffusionRecommenderSimilarity import MultiBlo
 from Diffusion.MultiBlockAttentionDiffusionRecommender import MultiBlockAttentionDiffusionRecommenderInf
 from Diffusion.MultiBlockSimilarityAttentionDiffusionRecommender import SAD
 from Diffusion.MultiBlockWSimilarityAttentionDiffusionRecommender import WSAD_Recommender
+from Diffusion.LSSAD import LSSAD
+
 import psycopg2
 from psycopg2 import sql
 
@@ -111,7 +113,7 @@ def objective(trial):
     heads = trial.suggest_categorical('heads', [1, 4, 8, 16])
     attention_blocks = trial.suggest_categorical('attention_blocks', [1])
     d_ff = trial.suggest_categorical('d_ff', [1024, 2048, 4096])
-    epochs = trial.suggest_int('epochs', 2, 350)
+    epochs = trial.suggest_int('epochs', 2, 450)
     l2_reg = trial.suggest_loguniform('l2_reg', 1e-5, 1e-3)
     learning_rate = trial.suggest_loguniform('learning_rate', 1e-4, 1e-2)
     noise_timesteps = trial.suggest_int('noise_timesteps', 3, 80)
@@ -184,6 +186,8 @@ def get_model():
     
     if model_type == "S-SAD":
         model = MultiBlockAttentionDiffusionRecommenderInfSimilarity
+    elif model_type == "LSSAD":
+        model = LSSAD
     elif model_type == "DO NOT USE":
         model = MultiBlockAttentionDiffusionRecommenderSimilarity
     elif model_type == "ADPR":
@@ -289,8 +293,13 @@ if __name__ == '__main__':
     #search_metadata = {'batch_size': 256, 'embeddings_dim': 512, 'heads': 1, 'attention_blocks': 3, 'd_ff': 4096, 'epochs': 336, 'l2_reg': 0.0007440687899631993, 'learning_rate': 0.00036441971846935237, 'noise_timesteps': 81, 'inference_timesteps': 6, 'start_beta': 0.0006551779118897007, 'end_beta': 0.01539082762973255}# dataIO.load_data(P3alphaRecommender.RECOMMENDER_NAME + "_metadata")
     #optimal_hyperparams = search_metadata# search_metadata["hyperparameters_best"]
     
-    postgres_url = "postgresql://postgres:TGBCFSFxiLVUyNZInoIAfClDtkrTwZau@monorail.proxy.rlwy.net:18855/railway"
-    study = optuna.create_study(study_name= (model.RECOMMENDER_NAME + '_' + dataset_class()._get_dataset_name()), storage=postgres_url, load_if_exists=True, direction="maximize")
+    
+    if should_save_on_remote_db():
+        postgres_url = "postgresql://postgres:TGBCFSFxiLVUyNZInoIAfClDtkrTwZau@monorail.proxy.rlwy.net:18855/railway"
+        study = optuna.create_study(study_name= (model.RECOMMENDER_NAME + '_' + dataset_class()._get_dataset_name()), storage=postgres_url, load_if_exists=True, direction="maximize")
+    else:
+        study = optuna.create_study(study_name=model.RECOMMENDER_NAME, direction="maximize")
+    
     completed_trials = len([trial for trial in study.trials if trial.state == optuna.trial.TrialState.COMPLETE])
 
 

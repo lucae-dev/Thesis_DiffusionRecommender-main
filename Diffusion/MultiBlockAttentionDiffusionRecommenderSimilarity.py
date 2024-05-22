@@ -38,6 +38,8 @@ class MultiBlockAttentionDiffusionRecommenderSimilarity(BaseRecommender, Increme
             print("no GPU")
 
         self.warm_user_ids = np.arange(0, self.n_users)[np.ediff1d(sps.csr_matrix(self.URM_train).indptr) > 0]
+        self.sampler = TwoRandomWalksSampler(self.URM_train, self.warm_user_ids) 
+
 
     def _set_inference_timesteps(self,inference_timesteps):
         self.inference_timesteps = inference_timesteps
@@ -114,7 +116,6 @@ class MultiBlockAttentionDiffusionRecommenderSimilarity(BaseRecommender, Increme
                                                              encoder_model = encoder_model,
                                                              denoiser_model = denoiser_model).to(self.device)
         
-        self.sampler = TwoRandomWalksSampler(self.URM_train, self.warm_user_ids) 
 
     def fit(self, epochs = 300,
             batch_size = 128,
