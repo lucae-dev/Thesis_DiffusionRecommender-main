@@ -5,6 +5,7 @@ from scipy.sparse.csgraph import connected_components
 import numpy as np
 from scipy.sparse import csr_matrix, diags
 from scipy.sparse.csgraph import connected_components
+from sklearn.cluster import AgglomerativeClustering
 import torch
 
 class TwoRandomWalksSimilarity:
@@ -84,6 +85,50 @@ class TwoRandomWalksSampler:
     
     def get_similarity_matrix(self):
         return self.similarity_matrix
+    
+    def batch_users(self, batch_size):
+        # Convert the similarity matrix to a distance matrix
+        similarity_matrix_dense = self.similarity_matrix.toarray()
+        distance_matrix = np.max(similarity_matrix_dense) - similarity_matrix_dense
+        
+        # Number of clusters
+        n_clusters = int(np.ceil(self.n_user / batch_size))
+
+        # Apply Agglomerative Clustering
+        clustering = AgglomerativeClustering(n_clusters=n_clusters, affinity='precomputed', linkage='average')
+        clusters = clustering.fit_predict(distance_matrix)
+
+        # Create batches
+        batches = [[] for _ in range(n_clusters)]
+        for user, cluster in enumerate(clusters):
+            batches[cluster].append(user)
+
+        # Adjust batches to ensure each batch has exactly batch_size users (except possibly the last one)
+        adjusted_batches = self._adjust_batches(batches, batch_size)
+
+        # Convert batch indices to user IDs
+        adjusted_batches_user_ids = [np.array(self.warm_user_ids)[batch] for batch in adjusted_batches]
+
+        return adjusted_batches_user_ids
+
+    def _adjust_batches(self, batches, batch_size):
+        # Flatten the batches list and sort by original batch sizes
+        users = [user for batch in batches for user in batch]
+        adjusted_batches = []
+
+        # Create new batches of size batch_size
+        while len(users) >= batch_size:
+            adjusted_batches.append(users[:batch_size])
+            users = users[batch_size:]
+
+        # Add the remaining users to the last batch (if any)
+        if users:
+            if adjusted_batches:
+                adjusted_batches[-1].extend(users)
+            else:
+                adjusted_batches.append(users)
+
+        return adjusted_batches
 
 
 
