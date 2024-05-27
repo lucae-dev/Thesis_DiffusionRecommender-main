@@ -1,4 +1,5 @@
 import ast
+import inspect
 import re
 from Data_manager.DataSplitter_leave_k_out import DataSplitter_leave_k_out
 from Data_manager.DataPostprocessing_K_Cores import DataPostprocessing_K_Cores
@@ -325,8 +326,10 @@ if __name__ == '__main__':
         optimal_hyperparams_str = df.loc[df['NDCG'].idxmax(), 'hyperparams']
         optimal_hyperparams = ast.literal_eval(optimal_hyperparams_str)
     else: 
-        optimal_hyperparams = study.best_trial.params
-
+        fit_method = recommender_instance.fit
+        fit_params = inspect.signature(fit_method).parameters
+        optimal_hyperparams = {k: v for k, v in study.best_trial.params.items() if k in fit_params}
+         
     print(optimal_hyperparams)
     # Fit model with optimal hyperparameters
     recommender_instance.fit(**optimal_hyperparams)
