@@ -322,7 +322,7 @@ if __name__ == '__main__':
 
     df =  pd.read_csv(filename)
     optimal_hyperparams_str = df.loc[df['NDCG'].idxmax(), 'hyperparams']
-    optimal_hyperparams = ast.literal_eval(optimal_hyperparams_str)
+    optimal_hyperparams = ast.literal_eval(optimal_hyperparams_str) if save_to_db().lower() == "false" else study.best_trial.params
     print(optimal_hyperparams)
     # Fit model with optimal hyperparameters
     recommender_instance.fit(**optimal_hyperparams)
