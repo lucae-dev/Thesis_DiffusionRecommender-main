@@ -329,6 +329,7 @@ if __name__ == '__main__':
         fit_method = recommender_instance.fit
         fit_params = inspect.signature(fit_method).parameters
         optimal_hyperparams = {k: v for k, v in study.best_trial.params.items() if k in fit_params}
+        optimal_hyperparams_str = str(optimal_hyperparams)
          
     print(optimal_hyperparams)
     # Fit model with optimal hyperparameters
