@@ -320,7 +320,7 @@ if __name__ == '__main__':
     directory_path = './Self-Attention/OptunaResults/Dataset/' + (str(k_cores) if k_cores > 0 else "full") + '/' + dataset_class()._get_dataset_name()
     filename = directory_path + '/' + recommender_instance.RECOMMENDER_NAME + "_x0" + ".csv"
 
-    if save_to_db().lower() == "false":
+    if should_save_on_remote_db().lower() == "false":
         df =  pd.read_csv(filename)
         optimal_hyperparams_str = df.loc[df['NDCG'].idxmax(), 'hyperparams']
         optimal_hyperparams = ast.literal_eval(optimal_hyperparams_str)
