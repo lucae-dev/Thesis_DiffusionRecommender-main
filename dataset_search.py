@@ -1,4 +1,5 @@
 import ast
+import re
 from Data_manager.DataSplitter_leave_k_out import DataSplitter_leave_k_out
 from Data_manager.DataPostprocessing_K_Cores import DataPostprocessing_K_Cores
 from Data_manager.data_consistency_check import assert_disjoint_matrices, assert_implicit_data
@@ -334,11 +335,13 @@ if __name__ == '__main__':
     recommender_instance_name = recommender_instance.RECOMMENDER_NAME + "_x0"
 
     experiment_table_name = recommender_instance_name + '_' + dataset_class()._get_dataset_name() + 'experiment'
+    clean_experiment_table_name = re.sub(r'[^a-zA-Z0-9_]', '_', experiment_table_name)
+
     result_table_name = dataset_class()._get_dataset_name() + 'best_result'
 
     if should_save_on_remote_db():
-        save_to_db(df, experiment_table_name)
         save_to_db(result_df, result_table_name)
+        save_to_db(df, clean_experiment_table_name)
         
     print("fine esperimento!")
 
