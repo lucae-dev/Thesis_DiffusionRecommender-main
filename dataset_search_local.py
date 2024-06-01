@@ -110,7 +110,7 @@ def objective(trial):
     heads = trial.suggest_categorical('heads', [1, 4, 8, 16])
     attention_blocks = trial.suggest_categorical('attention_blocks', [1])
     d_ff = trial.suggest_categorical('d_ff', [1024, 2048, 4096])
-    epochs = trial.suggest_int('epochs', 2, 3)
+    epochs = trial.suggest_int('epochs', 2, 300)
     l2_reg = trial.suggest_loguniform('l2_reg', 1e-5, 1e-3)
     learning_rate = trial.suggest_loguniform('learning_rate', 1e-4, 1e-2)
     noise_timesteps = trial.suggest_int('noise_timesteps', 3, 80)
@@ -277,7 +277,7 @@ if __name__ == '__main__':
     print(f"Number of completed trials: {completed_trials}")
 
     # Calculate the number of remaining trials
-    remaining_trials = 2 - completed_trials
+    remaining_trials = 50 - completed_trials
 
     if remaining_trials > 0:
         # Continue optimizing with the remaining number of trials
