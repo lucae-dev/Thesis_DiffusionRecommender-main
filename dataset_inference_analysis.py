@@ -1,3 +1,4 @@
+import ast
 import json
 
 from Data_manager.DataSplitter_leave_k_out import DataSplitter_leave_k_out
@@ -218,8 +219,8 @@ if __name__ == '__main__':
             hyperparams = row['hyperparams'] 
             # Parse hyperparams if they are in string format
             if isinstance(hyperparams, str):
-                hyperparams = json.loads(hyperparams)
-            
+                hyperparams = ast.literal_eval(hyperparams)
+                
                 
             # Fit the model with hyperparams (you need to implement this part)
             model = None
