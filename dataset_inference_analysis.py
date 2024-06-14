@@ -233,7 +233,7 @@ if __name__ == '__main__':
             if model:    
                 hyperparams['noise_timesteps'] = 102
                 recommender_instance.fit(**hyperparams)
-                for inference_timestamp in range(0, 100, 10):
+                for inference_timestamp in range(0, 105, 5):
                     print("Processing inference timestamp: " + str(inference_timestamp) + "/100")
                     if inference_timestamp == 0:
                         inference_timestamp = 1
