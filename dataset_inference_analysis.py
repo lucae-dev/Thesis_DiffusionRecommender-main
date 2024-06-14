@@ -237,7 +237,7 @@ if __name__ == '__main__':
                     print("Processing inference timestamp: " + str(inference_timestamp) + "/100")
                     if inference_timestamp == 0:
                         inference_timestamp = 1
-                    recommender_instance._set_inference_timesteps(inference_timestamp)
+                    recommender_instance.set_inference_timesteps(inference_timestamp)
                     result_df, result_str = evaluator_test.evaluateRecommender(recommender_instance)
                     result_df['model'] = model_name
                     result_df['inference_timestamp'] = inference_timestamp
