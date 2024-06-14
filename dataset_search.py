@@ -7,7 +7,6 @@ from Data_manager.data_consistency_check import assert_disjoint_matrices, assert
 from Evaluation.Evaluator import EvaluatorHoldout
 from Data_manager import *
 from Data_manager.Movielens.Movielens1MReader import Movielens1MReader
-from Diffusion.MultiBlockSimilarityAttentionDiffusionRecommender import SAD
 from Recommenders.DataIO import DataIO
 import optuna
 import numpy as np
@@ -113,7 +112,7 @@ def objective(trial):
     batch_size = trial.suggest_categorical('batch_size', [64, 128, 256, 512]) # , 1024]) # Movielens100k has only 943 users!!
     embeddings_dim = trial.suggest_categorical('embeddings_dim', [64, 128, 256, 512, 1024])
     heads = trial.suggest_categorical('heads', [1, 4, 8, 16])
-    attention_blocks = trial.suggest_categorical('attention_blocks', [1])
+    attention_blocks = 1 #trial.suggest_categorical('attention_blocks', [1])
     d_ff = trial.suggest_categorical('d_ff', [1024, 2048, 4096])
     epochs = trial.suggest_int('epochs', 2, 450)
     l2_reg = trial.suggest_loguniform('l2_reg', 1e-5, 1e-3)

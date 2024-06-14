@@ -7,7 +7,6 @@ from Data_manager.data_consistency_check import assert_disjoint_matrices, assert
 from Evaluation.Evaluator import EvaluatorHoldout
 from Data_manager import *
 from Data_manager.Movielens.Movielens1MReader import Movielens1MReader
-from Diffusion.MultiBlockSimilarityAttentionDiffusionRecommender import SAD
 from Recommenders.DataIO import DataIO
 import optuna
 import numpy as np
