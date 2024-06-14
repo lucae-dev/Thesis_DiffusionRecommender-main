@@ -115,11 +115,13 @@ def close_connection(conn, cursor):
 
 
 
+
     
 def fetch_rows_from_db(table, models):
     conn, cursor = get_connection()
     cursor.execute(f"SELECT * FROM {table} WHERE model = ANY(%s)", (models,))
-    rows = cursor.fetchall()
+    columns = [col[0] for col in cursor.description]
+    rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
     close_connection(conn, cursor)
     return rows
 
