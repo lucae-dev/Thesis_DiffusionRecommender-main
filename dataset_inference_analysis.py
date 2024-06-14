@@ -204,7 +204,7 @@ if __name__ == '__main__':
     # Iterate over each table
     for table in tables:
         print(f"Processin table: {table}")
-        URM_train, URM_validation, URM_test = load_data_splitted(tables_mapping[table])
+        URM_train, URM_validation, URM_test = load_data_splitted(get_dataset(tables_mapping[table]))
         evaluator_validation = EvaluatorHoldout(URM_validation, cutoff_list = cutoff_list)
         evaluator_validation_earlystopping = EvaluatorHoldout(URM_validation, cutoff_list = [cutoff_to_optimize])
         evaluator_test = EvaluatorHoldout(URM_test, cutoff_list = cutoff_list)
