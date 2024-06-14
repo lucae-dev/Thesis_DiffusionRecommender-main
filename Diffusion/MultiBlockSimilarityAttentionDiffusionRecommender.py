@@ -216,3 +216,6 @@ class SAD(MultiBlockAttentionDiffusionRecommenderSimilarity):
                                                              denoiser_model = denoiser_model).to(self.device)
         
         self.sampler = TwoRandomWalksSampler(self.URM_train, self.warm_user_ids) 
+
+    def set_inference_timesteps(self,inference_timesteps):
+        self.inference_timesteps = inference_timesteps

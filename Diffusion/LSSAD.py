@@ -181,3 +181,6 @@ class LSSAD(MultiBlockAttentionDiffusionRecommenderSimilarity):
         user_batches = [user_to_batch[user_id] for user_id in user_ids]
 
         return user_batches
+    
+    def set_inference_timesteps(self,inference_timesteps):
+        self.inference_timesteps = inference_timesteps

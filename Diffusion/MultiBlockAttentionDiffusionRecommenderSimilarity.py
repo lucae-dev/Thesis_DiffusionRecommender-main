@@ -41,7 +41,7 @@ class MultiBlockAttentionDiffusionRecommenderSimilarity(BaseRecommender, Increme
         self.sampler = TwoRandomWalksSampler(self.URM_train, self.warm_user_ids) 
 
 
-    def _set_inference_timesteps(self,inference_timesteps):
+    def set_inference_timesteps(self,inference_timesteps):
         self.inference_timesteps = inference_timesteps
         
     def get_diffusion_parameters(self):
@@ -341,6 +341,9 @@ class MultiBlockAttentionDiffusionRecommenderSimilarity(BaseRecommender, Increme
 
 class MultiBlockAttentionDiffusionRecommenderInfSimilarity(MultiBlockAttentionDiffusionRecommenderSimilarity):
     RECOMMENDER_NAME = "S-SAD"
+
+    def set_inference_timesteps(self,inference_timesteps):
+        self.inference_timesteps = inference_timesteps
 
     def _run_epoch(self, num_epoch):
 

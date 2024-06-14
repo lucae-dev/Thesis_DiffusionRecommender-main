@@ -41,7 +41,7 @@ class MultiBlockAttentionDiffusionRecommender(BaseRecommender, Incremental_Train
 
         self.warm_user_ids = np.arange(0, self.n_users)[np.ediff1d(sps.csr_matrix(self.URM_train).indptr) > 0]
 
-    def _set_inference_timesteps(self,inference_timesteps):
+    def set_inference_timesteps(self,inference_timesteps):
         self.inference_timesteps = inference_timesteps
         
     def get_diffusion_parameters(self):
