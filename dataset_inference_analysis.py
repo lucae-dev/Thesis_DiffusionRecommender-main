@@ -225,18 +225,20 @@ if __name__ == '__main__':
             # Fit the model with hyperparams (you need to implement this part)
             model = None
             model = get_model(model_name)
+            recommender_instance = model(URM_train+URM_validation)
+
             print(f"Processing Model: {model_name}")
             
             # Fit the model
             if model:    
                 hyperparams['noise_timesteps'] = 102
-                model.fit(**hyperparams)
+                recommender_instance.fit(**hyperparams)
                 for inference_timestamp in range(0, 100, 10):
                     print("Processing inference timestamp: " + str(inference_timestamp) + "/100")
                     if inference_timestamp == 0:
                         inference_timestamp = 1
-                    model._set_inference_timesteps(inference_timestamp)
-                    result_df, result_str = evaluator_test.evaluateRecommender(model)
+                    recommender_instance._set_inference_timesteps(inference_timestamp)
+                    result_df, result_str = evaluator_test.evaluateRecommender(recommender_instance)
                     result_df['model'] = model_name
                     result_df['inference_timestamp'] = inference_timestamp
                     result_df['hyperparams'] = str(hyperparams)
