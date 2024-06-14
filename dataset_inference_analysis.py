@@ -215,7 +215,7 @@ if __name__ == '__main__':
 
         for row in rows:
             model_name = row['model']
-            hyperparams = json.loads(row['hyperparams'])  # Assuming hyperparams are stored as JSON
+            hyperparams = row['hyperparams'] 
             
                 
             # Fit the model with hyperparams (you need to implement this part)
