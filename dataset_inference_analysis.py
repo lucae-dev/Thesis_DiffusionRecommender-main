@@ -239,7 +239,7 @@ if __name__ == '__main__':
                         inference_timestamp = 1
                     recommender_instance.set_inference_timesteps(inference_timestamp)
                     result_df, result_str = evaluator_test.evaluateRecommender(recommender_instance)
-                    result_df['table'] = tables_mapping[table]
+                    result_df['dataset'] = tables_mapping[table]
                     result_df['model'] = model_name
                     result_df['inference_timestamp'] = inference_timestamp
                     result_df['hyperparams'] = str(hyperparams)
