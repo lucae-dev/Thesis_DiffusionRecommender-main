@@ -42,7 +42,7 @@ class SimpleAttentionDiffusionModel(nn.Module):
         return loss_batch
     
     def inference(self, user_profile_batch, inference_timesteps, similarity_matrix = None):
-        user_profile_inference = user_profile_batch.cpu().numpy()
+        user_profile_inference = user_profile_batch.numpy()
         for inference_timestep in range(inference_timesteps, 0, -1):
             x_emb_batch = self.encoder_model.encode(torch.tensor(user_profile_inference))
             
