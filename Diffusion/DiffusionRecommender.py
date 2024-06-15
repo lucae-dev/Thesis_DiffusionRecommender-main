@@ -133,6 +133,7 @@ class _GaussianDiffusionModel(nn.Module):
         :param inference_timesteps:
         :return:
         """
+        print("sampling from user profile with timesteps: " + str(inference_timesteps)) 
 
         with torch.no_grad():
             gaussian_noise = torch.randn_like(user_profile, device=user_profile.device)
