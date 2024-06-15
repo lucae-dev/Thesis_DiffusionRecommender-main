@@ -243,4 +243,4 @@ if __name__ == '__main__':
                     result_df['model'] = model_name
                     result_df['inference_timestamp'] = inference_timestamp
                     result_df['hyperparams'] = str(hyperparams)
-                    save_to_db(result_df, "timestep_analysis")
+                    save_to_db(result_df, "inference_timestep_analysis")

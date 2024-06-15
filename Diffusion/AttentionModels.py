@@ -42,11 +42,12 @@ class SimpleAttentionDiffusionModel(nn.Module):
         return loss_batch
     
     def inference(self, user_profile_batch, inference_timesteps, similarity_matrix = None):
-        x_emb_batch = self.encoder_model.encode(user_profile_batch)
-        
-        user_profile_inference_emb = self._model.sample_from_user_profile(x_emb_batch, inference_timesteps, similarity_matrix)
-        
-        user_profile_inference = self.encoder_model.decode(user_profile_inference_emb).cpu().detach().numpy()
+        for inference_timestep in range(inference_timesteps, 0, -1):
+            x_emb_batch = self.encoder_model.encode(user_profile_batch)
+            
+            user_profile_inference_emb = self._model.sample_from_user_profile(x_emb_batch, inference_timestep, similarity_matrix)
+            
+            user_profile_inference = self.encoder_model.decode(user_profile_inference_emb).cpu().detach().numpy()
         return user_profile_inference
 
 class MultiBlockAttentionDiffusionModel(nn.Module):
