@@ -233,10 +233,10 @@ if __name__ == '__main__':
             if model:    
                 hyperparams['noise_timesteps'] = 102
                 recommender_instance.fit(**hyperparams)
-                for inference_timestamp in range(0, 105, 5):
-                    print("Processing inference timestamp: " + str(inference_timestamp) + "/100")
+                for inference_timestamp in range(0, 110, 10):
                     if inference_timestamp == 0:
                         inference_timestamp = 1
+                    print("Processing inference timestamp: " + str(inference_timestamp) + "/100")
                     recommender_instance.set_inference_timesteps(inference_timestamp)
                     result_df, result_str = evaluator_test.evaluateRecommender(recommender_instance)
                     result_df['dataset'] = tables_mapping[table]
