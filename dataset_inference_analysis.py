@@ -198,15 +198,15 @@ if __name__ == '__main__':
     # Define your tables and models
     tables = [
        # 'movielens1mbest_result',
-       'frappebest_result',
-        'filmtrustbest_result'
-        #'lastfmhetrec2011best_result'
+       #'frappebest_result',
+       #'filmtrustbest_result',
+      'lastfmhetrec2011best_result'
     ]
-    models = [#'ADPR_x0', 
-              #'MB_ADPR_x0', 
-              #'SAD_x0', 
+    models = ['ADPR_x0', 
+              'MB_ADPR_x0', 
+              'SAD_x0', 
               'S_SAD_x0' 
-              #'LS_SAD_x0'
+              'LS_SAD_x0'
               ]
 
     # Iterate over each table
