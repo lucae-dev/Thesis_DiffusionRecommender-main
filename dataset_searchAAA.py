@@ -297,7 +297,7 @@ if __name__ == '__main__':
     
     if should_save_on_remote_db():
         postgres_url = "postgresql://postgres:TGBCFSFxiLVUyNZInoIAfClDtkrTwZau@monorail.proxy.rlwy.net:18855/railway"
-        study = optuna.create_study(study_name= (model.RECOMMENDER_NAME + '_' + Movielens1MReader._get_dataset_name()), storage=postgres_url, load_if_exists=True, direction="maximize")
+        study = optuna.create_study(study_name= (model.RECOMMENDER_NAME + '_' + Movielens1MReader()._get_dataset_name()), storage=postgres_url, load_if_exists=True, direction="maximize")
     else:
         study = optuna.create_study(study_name=model.RECOMMENDER_NAME, direction="maximize")
     
