@@ -329,6 +329,7 @@ if __name__ == '__main__':
         fit_params = inspect.signature(fit_method).parameters
         optimal_hyperparams = {k: v for k, v in study.best_trial.params.items() if k in fit_params}
         optimal_hyperparams['epochs'] = 300
+        optimal_hyperparams['inference_timesteps'] = 112
         optimal_hyperparams_str = str(optimal_hyperparams)
     
     print('training the model with hyperpams:' + optimal_hyperparams_str)     
