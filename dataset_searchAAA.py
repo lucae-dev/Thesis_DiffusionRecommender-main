@@ -349,7 +349,6 @@ if __name__ == '__main__':
 
     if should_save_on_remote_db():
         save_to_db(result_df, result_table_name)
-        save_to_db(df, clean_experiment_table_name)
     
     for inference_timestamp in range(0, 110, 5):
         if inference_timestamp == 0:
@@ -361,7 +360,7 @@ if __name__ == '__main__':
         result_df['model'] = recommender_instance_name
         result_df['inference_timestamp'] = inference_timestamp
         result_df['hyperparams'] = optimal_hyperparams_str
-        save_to_db(result_df, "inference_timestep_analysis")
+        save_to_db(result_df, "fake_inference_timestep_analysis")
 
     print("fine esperimento!")
 
