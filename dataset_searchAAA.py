@@ -348,7 +348,7 @@ if __name__ == '__main__':
     result_table_name = dataset_class()._get_dataset_name() + 'best_result'
 
     if should_save_on_remote_db():
-        save_to_db(result_df, result_table_name)
+        save_to_db(result_df, 'fake' + result_table_name)
     
     for inference_timestamp in range(0, 110, 5):
         if inference_timestamp == 0:
